@@ -12,6 +12,7 @@ from currency_converter import CurrencyConverter
 sns.set_style('darkgrid')
 ratio = (18, 10)
 
+# print('haha')
 
 def stock_return_risk(ticker, method='log'):
     """
