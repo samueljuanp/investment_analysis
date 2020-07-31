@@ -12,7 +12,6 @@ from currency_converter import CurrencyConverter
 sns.set_style('darkgrid')
 ratio = (18, 10)
 
-# print('haha')
 
 def stock_return_risk(ticker, method='log'):
     """
@@ -232,9 +231,6 @@ def compare_stocks(freq='W', start_date='1998-01-01'):
     Default frequency is B. Other available frequencies are W, BQ, M, and A.
 
     """
-    print('mei you')
-    print('hahaha')
-    print('lolol')
     my_stocks = []
     my_columns = []
 
