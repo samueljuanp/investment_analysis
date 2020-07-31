@@ -10,7 +10,7 @@ import seaborn as sns
 from currency_converter import CurrencyConverter
 
 sns.set_style('darkgrid')
-ratio = (18, 10)
+ratio = (22, 12)
 
 
 def stock_return_risk(ticker, method='log'):
@@ -371,7 +371,7 @@ def etf_information(x):
     print(stock[9][['Name', 'Weight']], end='\n\n')
 
 
-def moving_averages(ticker, start_date='1998-01-01', freq='W'):
+def moving_averages(ticker, start_date='2000-01-01', freq='W'):
     """
     This function is to generate Bollinger Band and Moving Averages of a stock based on a chosen timeframe.
     Default frequency is B. Other available frequencies are W, BQ, M, and A.
@@ -850,11 +850,11 @@ def check_projected_growth_rate(modify=False):
     growth_rate_table = r'C:\Users\User\OneDrive\Python_Programming\growth_rate.csv'
     x = pd.read_csv(growth_rate_table, index_col=0)
 
-    if modify == False:  # user only wants to check the table content
+    if modify is False:  # user only wants to check the table content
         print('')
         print(x)
 
-    elif modify == True:  # user wants to check the content and modify
+    elif modify is True:  # user wants to check the content and modify
 
         n = int(input('How many tickers would you like to modify? '))
 
@@ -878,3 +878,38 @@ def check_projected_growth_rate(modify=False):
         print(x)
         print('')
         print('=========================================================================')
+
+
+def stochastic_full(ticker, start_date='2018-01-01', freq='B'):
+    """
+    This function is to generate slow stochastic oscillator to indicate overbought or oversold condition.
+    By default, frequncy is daily (B). It can be changed to weekly (W).
+    """
+    window_length = 10
+    slowing_period = 3
+
+    stock_data = wb.DataReader(ticker, 'yahoo', start_date)
+    stock_data = stock_data.resample(rule=freq).mean()
+
+    # to get the minimum price point from specified window length period
+    stock_data[('L' + str(window_length))] = stock_data['Low'].rolling(window=window_length).min()
+    # to get the maximum price point from specified window length period
+    stock_data[('H' + str(window_length))] = stock_data['High'].rolling(window=window_length).max()
+
+    numerator = stock_data['Close'] - stock_data[('L' + str(window_length))]
+    denominator = stock_data[('H' + str(window_length))] - stock_data[('L' + str(window_length))]
+
+    stock_data['% K'] = numerator / denominator * 100
+    stock_data['Full K'] = stock_data['% K'].ewm(span=slowing_period).mean()
+    stock_data.dropna(inplace=True)
+
+    # to plot the chart
+    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=ratio)
+
+    stock_data['Adj Close'].plot(ax=axes[0], c='blue')
+    axes[0].set_title('Close Price of ' + ticker + ' (' + frequency + ')')
+
+    stock_data['Full K'].plot(ax=axes[1], c='purple', ylim=[0, 100])
+    axes[1].set_title('Full Stochastic Oscillator' + ' (' + frequency + ')')
+    axes[1].axhline(20, c='green', ls='--')
+    axes[1].axhline(80, c='red', ls='--')
