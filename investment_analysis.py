@@ -233,6 +233,7 @@ def compare_stocks(freq='W', start_date='1998-01-01'):
     """
     print('mei you')
     print('hahaha')
+    print('lolol')
     my_stocks = []
     my_columns = []
 
