@@ -10,7 +10,7 @@ import seaborn as sns
 from currency_converter import CurrencyConverter
 
 sns.set_style('darkgrid')
-ratio = (22, 12)
+ratio = (18, 12)
 
 
 def stock_return_risk(ticker, method='log'):
@@ -907,9 +907,11 @@ def stochastic_full(ticker, start_date='2018-01-01', freq='B'):
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=ratio)
 
     stock_data['Adj Close'].plot(ax=axes[0], c='blue')
-    axes[0].set_title('Close Price of ' + ticker + ' (' + frequency + ')')
+    axes[0].set_title('Close Price of ' + ticker + ' (' + freq + ')')
 
     stock_data['Full K'].plot(ax=axes[1], c='purple', ylim=[0, 100])
-    axes[1].set_title('Full Stochastic Oscillator' + ' (' + frequency + ')')
+    axes[1].set_title('Full Stochastic Oscillator' + ' (' + freq + ')')
     axes[1].axhline(20, c='green', ls='--')
     axes[1].axhline(80, c='red', ls='--')
+
+    plt.tight_layout()
