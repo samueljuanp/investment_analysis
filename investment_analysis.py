@@ -839,16 +839,19 @@ def technical_analysis(ticker, start_date='2015-01-01', freq='W'):
 
     # to plot the chart
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=ratio)
-    stock_data['Adj Close'].plot(ax=axes[0], c='black', alpha=0.7)
+
+    stock_data['Adj Close'].plot(ax=axes[0], c='black', alpha=0.7, label='Close Price of ' + ticker)
     stock_data['50-EWMA'].plot(ax=axes[0], c='blue', ls='--', label='50-Span Exponentially Weighted Moving Average')
     stock_data['150-EWMA'].plot(ax=axes[0], c='green', ls='--', label='150-Span Exponentially Weighted Moving Average')
     stock_data['200-EWMA'].plot(ax=axes[0], c='red', ls='--', label='200-Span Exponentially Weighted Moving Average')
     axes[0].set_title('Close Price and Moving Averages of ' + ticker + ' (' + freq + ')')
+    axes[0].legend()
 
-    stock_data['Full K'].plot(ax=axes[1], c='purple', ylim=[0, 100])
+    stock_data['Full K'].plot(ax=axes[1], c='purple', ylim=[0, 100], label='Oscillator Line')
     axes[1].set_title('Full Stochastic Oscillator' + ' (' + freq + ')')
-    axes[1].axhline(20, c='green', ls='--')
-    axes[1].axhline(80, c='red', ls='--')
+    axes[1].axhline(80, c='red', ls='--', label='Overbought')
+    axes[1].axhline(20, c='green', ls='--', label='Oversold')
+    axes[1].legend()
 
     plt.tight_layout()
 
