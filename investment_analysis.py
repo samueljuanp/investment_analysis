@@ -231,7 +231,8 @@ def compare_stocks(freq='W', start_date='1998-01-01'):
     Default frequency is B. Other available frequencies are W, BQ, M, and A.
 
     """
-    print('something else')
+    print('mei you')
+    print('hahaha')
     my_stocks = []
     my_columns = []
 
