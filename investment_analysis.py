@@ -371,77 +371,6 @@ def etf_information(x):
     print(stock[9][['Name', 'Weight']], end='\n\n')
 
 
-def moving_averages(ticker, start_date='2000-01-01', freq='W'):
-    """
-    This function is to generate Bollinger Band and Moving Averages of a stock based on a chosen timeframe.
-    Default frequency is B. Other available frequencies are W, BQ, M, and A.
-
-    """
-    # pulling stock market data based on given start date
-    stock_data = wb.DataReader(ticker.upper(), 'yahoo', start_date)
-    stock_data.dropna(inplace=True)
-
-    # resample the data based on weekly, quarterly, monthly, or annually resolution
-    stock_data = stock_data.resample(rule=freq).mean()
-
-    # create exponentially weighted moving averages (EWMA) information
-    stock_data['50-EWMA'] = stock_data['Adj Close'].ewm(span=50).mean()
-    stock_data['150-EWMA'] = stock_data['Adj Close'].ewm(span=150).mean()
-    stock_data['200-EWMA'] = stock_data['Adj Close'].ewm(span=200).mean()
-
-    # create bollinger band based on 20-day simple moving average and +/- 2 standard deviation
-    # stock_data['20-SMA'] = stock_data['Adj Close'].rolling(20).mean()
-    # stock_data['Upper Band'] = stock_data['20-SMA'] + 2*(stock_data['Adj Close'].rolling(20).std())
-    # stock_data['Lower Band'] = stock_data['20-SMA'] - 2*(stock_data['Adj Close'].rolling(20).std())
-
-    # create visualization
-    fig, axes = plt.subplots(figsize=ratio, dpi=100)
-    axes.plot(stock_data['Adj Close'], color='black', alpha=0.7)
-    axes.plot(stock_data['50-EWMA'], color='blue', ls='--', label='50-Span Exponentially Weighted Moving Average')
-    axes.plot(stock_data['150-EWMA'], color='green', ls='--', label='150-Span Exponentially Weighted Moving Average')
-    axes.plot(stock_data['200-EWMA'], color='red', ls='--', label='200-Span Exponentially Weighted Moving Averege')
-    # axes.plot(stock_data['Upper Band'],color='purple',lw=1.5,ls='dotted',label='Upper Bollinger Band')
-    # axes.plot(stock_data['Lower Band'],color='purple',lw=1.5,ls='dotted',label='Lower Bollinger Band')
-    axes.set_title(str('Moving Averages of ' + ticker.upper() + ' (' + freq + ')'))
-    plt.legend(loc=2)
-
-
-def rsi_indicator(ticker):
-    """
-    This function is to generate exponentially-weighted RSI indicator with 14-day window period.
-    One argumeent is required: the ticker of the company
-    """
-    end_date = dt.datetime.today()
-    start_date = end_date - dt.timedelta(days=250)
-    window_length = 10
-
-    stock = wb.DataReader(ticker, 'yahoo', start_date, end_date)['Adj Close']
-    # to get the delta of close price every day
-    close_delta = stock.diff()[1:]
-    # to create a copy from close price delta for data manipulation
-    close_up, close_down = close_delta.copy(), close_delta.copy()
-    # to zero out those days with down movements (including no movement) in close_up series
-    close_up[close_up <= 0] = 0
-    # to zero out those days with up movements in close_down series
-    close_down[close_down > 0] = 0
-    # to calculate EWMA of the ups and downs
-    roll_up_ewm = close_up.ewm(span=window_length).mean()
-    roll_down_ewm = close_down.abs().ewm(span=window_length).mean()
-    # to calculate the EWM RSI
-    RSI_ewm = 100.00 - (100.00 / (1.00 + roll_up_ewm / roll_down_ewm))
-
-    # to make the RSI plot
-    plt.figure(figsize=ratio, dpi=100)
-    plt.ylim(10, 90)
-    RSI_ewm[2:].plot(label='RSI EWM')
-    plt.axhline(80, c='r')
-    plt.axhline(70, c='r', ls='--', lw=0.9, label='Overbought')
-    plt.axhline(30, c='g', ls='--', lw=0.9, label='Oversold')
-    plt.axhline(20, c='g')
-    plt.title(str('EWM RSI Indicator of ' + ticker))
-    plt.legend()
-
-
 def fundamental_analysis(ticker):
     """
     This function is to extract and compare business bottomline.
@@ -880,16 +809,21 @@ def check_projected_growth_rate(modify=False):
         print('=========================================================================')
 
 
-def stochastic_full(ticker, start_date='2018-01-01', freq='B'):
+def technical_analysis(ticker, start_date='2015-01-01', freq='W'):
     """
-    This function is to generate slow stochastic oscillator to indicate overbought or oversold condition.
-    By default, frequncy is daily (B). It can be changed to weekly (W).
+    This function is to generate Moving Averages and Full Stochastic of a stock based on a chosen time frame.
+    Default frequency is B. Other available frequencies are W, BQ, M, and A.
     """
     window_length = 10
     slowing_period = 3
 
-    stock_data = wb.DataReader(ticker, 'yahoo', start_date)
+    stock_data = wb.DataReader(ticker.upper(), 'yahoo', start_date)
     stock_data = stock_data.resample(rule=freq).mean()
+
+    # create exponentially weighted moving averages (EWMA) information
+    stock_data['50-EWMA'] = stock_data['Adj Close'].ewm(span=50).mean()
+    stock_data['150-EWMA'] = stock_data['Adj Close'].ewm(span=150).mean()
+    stock_data['200-EWMA'] = stock_data['Adj Close'].ewm(span=200).mean()
 
     # to get the minimum price point from specified window length period
     stock_data[('L' + str(window_length))] = stock_data['Low'].rolling(window=window_length).min()
@@ -905,9 +839,11 @@ def stochastic_full(ticker, start_date='2018-01-01', freq='B'):
 
     # to plot the chart
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=ratio)
-
-    stock_data['Adj Close'].plot(ax=axes[0], c='blue')
-    axes[0].set_title('Close Price of ' + ticker + ' (' + freq + ')')
+    stock_data['Adj Close'].plot(ax=axes[0], c='black', alpha=0.7)
+    stock_data['50-EWMA'].plot(ax=axes[0], c='blue', ls='--', label='50-Span Exponentially Weighted Moving Average')
+    stock_data['150-EWMA'].plot(ax=axes[0], c='green', ls='--', label='150-Span Exponentially Weighted Moving Average')
+    stock_data['200-EWMA'].plot(ax=axes[0], c='red', ls='--', label='200-Span Exponentially Weighted Moving Average')
+    axes[0].set_title('Close Price and Moving Averages of ' + ticker + ' (' + freq + ')')
 
     stock_data['Full K'].plot(ax=axes[1], c='purple', ylim=[0, 100])
     axes[1].set_title('Full Stochastic Oscillator' + ' (' + freq + ')')
@@ -915,3 +851,39 @@ def stochastic_full(ticker, start_date='2018-01-01', freq='B'):
     axes[1].axhline(80, c='red', ls='--')
 
     plt.tight_layout()
+
+
+def rsi_indicator(ticker):
+    """
+    This function is to generate exponentially-weighted RSI indicator with 14-day window period.
+    One argumeent is required: the ticker of the company
+    """
+    end_date = dt.datetime.today()
+    start_date = end_date - dt.timedelta(days=250)
+    window_length = 10
+
+    stock = wb.DataReader(ticker, 'yahoo', start_date, end_date)['Adj Close']
+    # to get the delta of close price every day
+    close_delta = stock.diff()[1:]
+    # to create a copy from close price delta for data manipulation
+    close_up, close_down = close_delta.copy(), close_delta.copy()
+    # to zero out those days with down movements (including no movement) in close_up series
+    close_up[close_up <= 0] = 0
+    # to zero out those days with up movements in close_down series
+    close_down[close_down > 0] = 0
+    # to calculate EWMA of the ups and downs
+    roll_up_ewm = close_up.ewm(span=window_length).mean()
+    roll_down_ewm = close_down.abs().ewm(span=window_length).mean()
+    # to calculate the EWM RSI
+    RSI_ewm = 100.00 - (100.00 / (1.00 + roll_up_ewm / roll_down_ewm))
+
+    # to make the RSI plot
+    plt.figure(figsize=ratio, dpi=100)
+    plt.ylim(10, 90)
+    RSI_ewm[2:].plot(label='RSI EWM')
+    plt.axhline(80, c='r')
+    plt.axhline(70, c='r', ls='--', lw=0.9, label='Overbought')
+    plt.axhline(30, c='g', ls='--', lw=0.9, label='Oversold')
+    plt.axhline(20, c='g')
+    plt.title(str('EWM RSI Indicator of ' + ticker))
+    plt.legend()
