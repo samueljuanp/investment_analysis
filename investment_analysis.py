@@ -10,7 +10,7 @@ import seaborn as sns
 from currency_converter import CurrencyConverter
 
 sns.set_style('darkgrid')
-ratio = (18, 12)
+ratio = (22, 12)
 
 
 def stock_return_risk(ticker, method='log'):
@@ -684,6 +684,9 @@ def stock_valuation(ticker, method='DCF', terminal_year=10, country='US', print_
 
     elif country == 'CH' and ticker.split('.')[-1] == 'HK':  # chinese companies listed in HK
         final_intrinsic_value = final_intrinsic_value * CurrencyConverter().convert(1, 'CNY', 'HKD')
+
+    elif country == 'CH' and ticker.split('.')[-1] == 'TW':  # chinese companies listed in TW
+        final_intrinsic_value = final_intrinsic_value * CurrencyConverter().convert(1, 'TWD', 'TWD')
 
     elif country == 'CH' and ticker.split('.')[-1] == 'SS':  # chinese companies list in CH
         final_intrinsic_value = final_intrinsic_value * CurrencyConverter().convert(1, 'CNY', 'CNY')
