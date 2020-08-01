@@ -775,7 +775,7 @@ def pb_valuation(ticker):
 
     print('Five-year minimum and maximum P/B ratio are {} and {} respectively'.format(min_pb_5_year, max_pb_5_year),
           end='\n\n')
-    print('Source: {}'.format(website))
+    print('Taken from: {}'.format(website))
 
 
 def check_projected_growth_rate(modify=False):
