@@ -12,7 +12,6 @@ from currency_converter import CurrencyConverter
 sns.set_style('darkgrid')
 ratio = (19, 12)
 
-#ulalalala
 
 def stock_return_risk(ticker, method='log'):
     """
@@ -347,7 +346,7 @@ def etf_information(x):
     stock[8].columns = ['Type', 'Allocation', '% Long', '% Short']
     print(stock[8][['Type','Allocation']].set_index('Type'), end='\n\n')
 
-    # getting top holdings table
+    # getting top 10 holdings table
     stock[9].columns = ['Company Name', 'Weightage', 'Price', '% Change']
     print(stock[9][['Company Name', 'Weightage']].set_index('Company Name'), end='\n\n')
 
