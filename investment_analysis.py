@@ -10,7 +10,7 @@ import seaborn as sns
 from currency_converter import CurrencyConverter
 
 sns.set_style('darkgrid')
-ratio = (22, 12)
+ratio = (19, 12)
 
 
 def stock_return_risk(ticker, method='log'):
@@ -332,43 +332,23 @@ def etf_information(x):
     website = 'https://ycharts.com/companies/' + x.upper()
     stock = pd.read_html(website)
     print('')
-    print(stock[10].iloc[0, 0], end='\n\n')
+    print(stock[10].iloc[1,0], end='\n\n')
     print('-------------- Key Information -------------', end='\n\n')
-    print('Expense Ratio = {}'.format(stock[0].iloc[0, 1]))
-    print('Total AUM = {}'.format(stock[0].iloc[1, 1]))
-    print('Average Daily Volume = {}'.format(stock[0].iloc[3, 1]))
-    print('Beta (5Y) = {}'.format(stock[13].iloc[0, 1]))
-    print('Max Drawdown (All) = {}'.format(stock[13].iloc[1, 1]))
-    print('Dividend Yield (TTM) = {}'.format(stock[14].iloc[0, 1]))
-    print('PE Ratio = {}'.format(stock[14].iloc[3, 1]))
-    print('Forecasted Earnings Growth (5Y) = {}'.format(stock[15].iloc[0, 1]))
+    print('Expense Ratio = {}%'.format(stock[0].iloc[0, 0]))
+    print('Total AUM = {}'.format(stock[0].iloc[0, 2]))
+    print('Average Daily Volume = {}'.format(stock[0].iloc[0, 3]))
+    print('Dividend Yield (TTM) = {}%'.format(stock[13].iloc[2, 1]))
+    print('Weighted Average PE Ratio = {}'.format(stock[13].iloc[7, 1]))
     print('')
     print('--------------------------------------------', end='\n\n')
 
     # getting asset allocation table
-    stock[3].set_index('Type', inplace=True)
-    stock[3].index.names = ['Asset Allocation']
-    print(stock[3], end='\n\n')
-
-    # getting region exposure table
-    stock[4].set_index(0, inplace=True)
-    stock[4].index.names = ['Region Exposure']
-    stock[5].set_index(0, inplace=True)
-    stock[5].index.names = ['Region Exposure']
-    region = pd.concat([stock[4], stock[5]])
-    region.rename(columns={1: 'Weight'}, inplace=True)
-    print(region.loc[['Americas', 'Greater Europe', 'Greater Asia'], :], end='\n\n')
-
-    # getting sector exposure table
-    stock[6].set_index(0, inplace=True)
-    stock[6].index.names = ['Sector Exposure']
-    stock[6].rename(columns={1: 'Weight'}, inplace=True)
-    print(stock[6], end='\n\n')
+    stock[8].columns = ['Type', 'Allocation', '% Long', '% Short']
+    print(stock[8][['Type','Allocation']].set_index('Type'), end='\n\n')
 
     # getting top holdings table
-    stock[9].set_index('Symbol', inplace=True)
-    stock[9].rename(columns={'% Weight': 'Weight'}, inplace=True)
-    print(stock[9][['Name', 'Weight']], end='\n\n')
+    stock[9].columns = ['Company Name', 'Weightage', 'Price', '% Change']
+    print(stock[9][['Company Name', 'Weightage']].set_index('Company Name'), end='\n\n')
 
 
 def fundamental_analysis(ticker):
