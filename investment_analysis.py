@@ -864,7 +864,7 @@ def rsi_indicator(ticker):
     RSI_ewm = 100.00 - (100.00 / (1.00 + roll_up_ewm / roll_down_ewm))
 
     # to make the RSI plot
-    plt.figure(figsize=(24,9), dpi=100)
+    plt.figure(figsize=(22,9), dpi=100)
     plt.ylim(10, 90)
     RSI_ewm[2:].plot(label='RSI EWM')
     plt.axhline(80, c='r')
