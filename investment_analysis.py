@@ -10,7 +10,7 @@ import seaborn as sns
 from currency_converter import CurrencyConverter
 
 sns.set_style('darkgrid')
-ratio = (19, 12)
+ratio = (18, 12)
 
 
 def stock_return_risk(ticker, method='log'):
@@ -821,7 +821,7 @@ def technical_analysis(ticker, start_date='2015-01-01', freq='W'):
     stock_data.dropna(inplace=True)
 
     # to plot the chart
-    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=ratio, gridspec_kw={'height_ratios':[2, 1.1]})
+    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=ratio, gridspec_kw={'height_ratios':[2,1.1]})
 
     stock_data['Adj Close'].plot(ax=axes[0], c='black', alpha=0.7, label='Close Price of ' + ticker)
     stock_data['50-EWMA'].plot(ax=axes[0], c='blue', ls='--', label='50-Span Exponentially Weighted Moving Average')
@@ -864,7 +864,7 @@ def rsi_indicator(ticker):
     RSI_ewm = 100.00 - (100.00 / (1.00 + roll_up_ewm / roll_down_ewm))
 
     # to make the RSI plot
-    plt.figure(figsize=ratio, dpi=100)
+    plt.figure(figsize=(24,9), dpi=100)
     plt.ylim(10, 90)
     RSI_ewm[2:].plot(label='RSI EWM')
     plt.axhline(80, c='r')
