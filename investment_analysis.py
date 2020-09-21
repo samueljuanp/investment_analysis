@@ -821,7 +821,7 @@ def technical_analysis(ticker, start_date='2015-01-01', freq='W'):
     stock_data.dropna(inplace=True)
 
     # to plot the chart
-    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=ratio)
+    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=ratio, gridspec_kw={'height_ratios':[2, 1.1]})
 
     stock_data['Adj Close'].plot(ax=axes[0], c='black', alpha=0.7, label='Close Price of ' + ticker)
     stock_data['50-EWMA'].plot(ax=axes[0], c='blue', ls='--', label='50-Span Exponentially Weighted Moving Average')
