@@ -842,7 +842,7 @@ def technical_analysis(ticker, start_date='2015-01-01', freq='W'):
 def rsi_indicator(ticker):
     """
     This function is to generate exponentially-weighted RSI indicator with 14-day window period.
-    One argumeent is required: the ticker of the company
+    One argument is required: the ticker of the company
     """
     end_date = dt.datetime.today()
     start_date = end_date - dt.timedelta(days=250)
@@ -857,7 +857,7 @@ def rsi_indicator(ticker):
     close_up[close_up <= 0] = 0
     # to zero out those days with up movements in close_down series
     close_down[close_down > 0] = 0
-    # to calculate EWMA of the ups and downs
+    # to calculate EMA of the ups and downs
     roll_up_ewm = close_up.ewm(span=window_length).mean()
     roll_down_ewm = close_down.abs().ewm(span=window_length).mean()
     # to calculate the EWM RSI
