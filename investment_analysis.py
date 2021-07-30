@@ -298,7 +298,7 @@ def best_x_dji(x):
     # getting listed companies inside Dow Jones index
     website = 'https://ycharts.com/companies/DIA/holdings'
     data = pd.read_html(website)
-    tickers = list(data[0]['Symbol'])
+    tickers = list(data[1]['Symbol'])
     tickers.append('DIA')
 
     # creating a dataframe consisting normalized stock prices of those listed companies
