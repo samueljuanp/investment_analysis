@@ -11,7 +11,7 @@ os.chdir(r'C:\Users\User\Documents\GitHub\investment_analysis')
 
 # import libraries
 import pandas as pd
-pd.options.display.float_format = "{:,.2f}".format
+pd.options.display.float_format = "{:,.f}".format
 import pandas_datareader as wb
 import numpy as np
 import matplotlib.pyplot as plt
@@ -72,5 +72,55 @@ def get_rolling_beta(stock, window=500, cov_type='HCCM'):
 #beta.to_csv('rolling_2y_beta.csv')
 
 #%%
+
+# generate allocation dataframe
+allocation = beta.copy()
+allocation.loc[:] = np.nan
+
+# loop over each day
+for date in beta.index:
+    # sort valid beta in ascending order
+    beta_sorted = beta.loc[date].dropna().sort_values()
+    # scale beta by its mean to avoid negative value
+    beta_scaled = beta_sorted + beta_sorted.mean()
+    # compute inverse allocation
+    beta_inverse = (1/beta_scaled) / (1/beta_scaled).sum()
+    # demean beta to compute long/short allocation
+    #beta_long_short = beta_inverse - beta_inverse.mean()
+    # assign allocation
+    allocation.loc[date, beta_inverse.index] = beta_inverse.values
+
+# check if allocation is long/short
+#if np.all(allocation.sum(axis=1) == 1):
+    #print('Sum of allocation each day is equal to zero!')
+
+#%%
+
+# simple backtest (to be improved)
+strat_return = (data.pct_change() * allocation.shift(2)).dropna(how='all').sum(axis=1)
+market_return = spx.pct_change().loc[strat_return.index[0]:]
+
+# visualize performance
+plt.figure(figsize=(15,8))
+plt.plot((strat_return + 1).cumprod(), label='Strategy')
+plt.plot((market_return + 1).cumprod(), label='Benchmark')
+plt.legend()
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
