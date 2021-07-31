@@ -11,7 +11,7 @@ os.chdir(r'C:\Users\User\Documents\GitHub\investment_analysis')
 
 # import libraries
 import pandas as pd
-pd.options.display.float_format = "{:,.f}".format
+pd.options.display.float_format = "{:,.3f}".format
 import pandas_datareader as wb
 import numpy as np
 import matplotlib.pyplot as plt
