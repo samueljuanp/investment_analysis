@@ -77,22 +77,35 @@ def get_rolling_beta(stock, window=500, cov_type='HCCM'):
 allocation = beta.copy()
 allocation.loc[:] = np.nan
 
+# set quantile parameter
+q = 0.10
+
 # loop over each day
 for date in beta.index:
+
     # sort valid beta in ascending order
     beta_sorted = beta.loc[date].dropna().sort_values()
+
     # scale beta by its mean to avoid negative value
     beta_scaled = beta_sorted + beta_sorted.mean()
-    # compute inverse allocation
-    beta_inverse = (1/beta_scaled) / (1/beta_scaled).sum()
-    # demean beta to compute long/short allocation
-    #beta_long_short = beta_inverse - beta_inverse.mean()
+
+    # select long and short names
+    long = beta_scaled[beta_scaled <= beta_scaled.quantile(q)]
+    #short = beta_scaled[beta_scaled >= beta_scaled.quantile(1-q)]
+
+    # compute allocation based on signal strength
+    long_alloc = (1/long) / (1/long).sum() # more weight to smallest beta
+    #short_alloc = -short / short.sum() # more weight to highest beta
+
     # assign allocation
-    allocation.loc[date, beta_inverse.index] = beta_inverse.values
+    allocation.loc[date, long_alloc.index] = long_alloc.values
+    #allocation.loc[date, short_alloc.index] = short_alloc.values
 
 # check if allocation is long/short
-#if np.all(allocation.sum(axis=1) == 1):
-    #print('Sum of allocation each day is equal to zero!')
+daily_alloc = allocation.dropna(how='all').sum(axis=1)
+if np.all(daily_alloc == 1): print('It is a long-only portfolio..')
+elif np.all(daily_alloc < 10**-12): print('It is a long-short portfolio..')
+else: print('Daily weight is not consistent..')
 
 #%%
 
