@@ -78,7 +78,7 @@ allocation = beta.copy()
 allocation.loc[:] = np.nan
 
 # set quantile parameter
-q = 0.10
+q = 0.05
 
 # loop over each day
 for date in beta.index:
