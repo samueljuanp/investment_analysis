@@ -103,8 +103,8 @@ for date in beta.index:
 
 # check if allocation is long/short
 daily_alloc = allocation.dropna(how='all').sum(axis=1)
-if np.all(daily_alloc == 1): print('It is a long-only portfolio..')
-elif np.all(daily_alloc < 10**-12): print('It is a long-short portfolio..')
+if np.all(np.isclose(daily_alloc, 1)): print('It is a long-only portfolio..')
+elif np.all(np.isclose(daily_alloc, 0)): print('It is a long-short portfolio..')
 else: print('Daily weight is not consistent..')
 
 #%%
