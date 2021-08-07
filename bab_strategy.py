@@ -20,7 +20,6 @@ sns.set_style('darkgrid')
 from statsmodels.regression.rolling import RollingOLS
 #import investment_analysis as ia
 
-
 #%%
 
 # retrieve data from csv
@@ -95,12 +94,20 @@ beta = pd.read_csv('rolling_2y_beta.csv', index_col=0, parse_dates=True)
 allocation = beta.copy()
 allocation.loc[:] = np.nan
 
-# set quantile parameter
+# generate allocation for naive equal weight strategy
+naive = data.copy()
+naive.loc[:] = np.nan
+
+# set quantile parameter and ratio
 q = 0.05
 low_high_ratio = 0.80
 
 # loop over each day
 for date in beta.index:
+
+    # calculate equal-weight allocation
+    valid_stocks = data.loc[date].dropna()
+    naive.loc[date, valid_stocks.index] = 1 / len(valid_stocks)
 
     # sort valid beta in ascending order
     beta_sorted = beta.loc[date].dropna().sort_values()
@@ -140,16 +147,12 @@ for date in beta.index:
 start = None
 end = None
 
-# compute daily strategy and market return
-strat_return = (data.pct_change() * allocation.shift(2)).dropna(how='all').sum(axis=1)
-strat_return = strat_return.loc[start:end]
-market_return = spx.pct_change().loc[strat_return.index[0]:strat_return.index[-1]]['SPX']
-
-# include transaction cost in basis points
-tc = 5
-cost = tc / 10000
-turnover = allocation.loc[start:end].shift().diff().fillna(0).abs()
-strat_return = strat_return - (turnover * cost).sum(axis=1)
+# define function to compute returns after transaction cost
+def include_transaction_cost(daily_return, alloc_df, tc):
+    cost = tc / 10000 # in basis points
+    turnover = alloc_df.loc[start:end].shift().diff().fillna(0).abs()
+    daily_return = daily_return - (turnover * cost).sum(axis=1)
+    return daily_return
 
 # define function to compute Sharpe ratio
 def sharpe_ratio(daily_return):
@@ -169,14 +172,35 @@ def annualized_return(daily_return):
     annual_return = annual_return * 100
     return annual_return
 
+# compute daily strategy return
+strat_return = (data.pct_change() * allocation.shift(2)).dropna(how='all').sum(axis=1)
+strat_return = strat_return.loc[start:end]
+
+# compute daily naive return
+naive_return = (data.pct_change() * naive.shift(2)).dropna(how='all').sum(axis=1)
+naive_return = naive_return.loc[start:end]
+
+# compute daily market return
+market_return = spx.pct_change().loc[start:end]['SPX']
+
+# compute returns after transaction cost
+strat_return = include_transaction_cost(strat_return, allocation, 5)
+naive_return = include_transaction_cost(naive_return, naive, 5)
+
 # visualize performance
 plt.figure(figsize=(15,8))
 plt.title('Portfolio Performance Comparison', fontsize=13)
 plt.ylabel('Net Asset Value', fontsize=13)
 
+# handle strategy curve
 plt.plot((strat_return + 1).cumprod(),
          label=f"Long-Low-High-Beta | Annualized = {annualized_return(strat_return):.2f}% | Sharpe = {sharpe_ratio(strat_return):.2f} | Max.DD = {max_drawdown(strat_return):.2f}%")
 
+# handle naive curve
+plt.plot((naive_return + 1).cumprod(),
+         label=f"Naive-Equal-Weight | Annualized = {annualized_return(naive_return):.2f}% | Sharpe = {sharpe_ratio(naive_return):.2f} | Max.DD = {max_drawdown(naive_return):.2f}%")
+
+# handle market curve
 plt.plot((market_return + 1).cumprod(),
          label=f"S&P500-Benchmark | Annualized = {annualized_return(market_return):.2f}% | Sharpe = {sharpe_ratio(market_return):.2f} | Max.DD = {max_drawdown(market_return):.2f}%")
 
