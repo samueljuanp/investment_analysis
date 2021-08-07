@@ -137,7 +137,7 @@ for date in beta.index:
 #%%
 
 # define backtest period
-start = '2005'
+start = None
 end = None
 
 # compute daily strategy and market return
@@ -146,7 +146,7 @@ strat_return = strat_return.loc[start:end]
 market_return = spx.pct_change().loc[strat_return.index[0]:strat_return.index[-1]]['SPX']
 
 # include transaction cost in basis points
-tc = 0
+tc = 5
 cost = tc / 10000
 turnover = allocation.loc[start:end].shift().diff().fillna(0).abs()
 strat_return = strat_return - (turnover * cost).sum(axis=1)
