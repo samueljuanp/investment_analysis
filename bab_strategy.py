@@ -136,14 +136,19 @@ for date in beta.index:
 
 #%%
 
-# backtest strategy
+# define backtest period
+start = '2005'
+end = None
+
+# compute daily strategy and market return
 strat_return = (data.pct_change() * allocation.shift(2)).dropna(how='all').sum(axis=1)
-market_return = spx.pct_change().loc[strat_return.index[0]:]['SPX']
+strat_return = strat_return.loc[start:end]
+market_return = spx.pct_change().loc[strat_return.index[0]:strat_return.index[-1]]['SPX']
 
 # include transaction cost in basis points
 tc = 0
 cost = tc / 10000
-turnover = allocation.shift().diff().fillna(0).abs()
+turnover = allocation.loc[start:end].shift().diff().fillna(0).abs()
 strat_return = strat_return - (turnover * cost).sum(axis=1)
 
 # define function to compute Sharpe ratio
@@ -152,8 +157,8 @@ def sharpe_ratio(daily_return):
 
 # define function to compute maximum drawdown
 def max_drawdown(daily_return):
-    rolling_max = (daily_return+ 1).cumprod().expanding().max()
-    monthly_drawdown = (daily_return+ 1).cumprod() / rolling_max.values - 1.0
+    rolling_max = (daily_return + 1).cumprod().expanding().max()
+    monthly_drawdown = (daily_return + 1).cumprod() / rolling_max.values - 1.0
     max_drawdown = monthly_drawdown.abs().max() * 100
     return max_drawdown
 
