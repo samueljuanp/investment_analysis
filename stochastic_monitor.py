@@ -134,11 +134,11 @@ class Stochastic_Monitor():
 
                 # assign ohlc and timeframe
                 if i == 0:
-                    ohlc = self.daily.xs(ticker, axis=1, level=1).dropna().copy()
-                    timeframe = 'Daily'
-                else:
                     ohlc = self.weekly.xs(ticker, axis=1, level=1).dropna().copy()
                     timeframe = 'Weekly'
+                else:
+                    ohlc = self.daily.xs(ticker, axis=1, level=1).dropna().copy()
+                    timeframe = 'Daily'
 
                 # compute rolling high and low during lookback period
                 ohlc['Rolling_High'] = ohlc['High'].rolling(window=lookback).max()
@@ -229,7 +229,7 @@ class Stochastic_Monitor():
 
         # sort dataframe
         for tab in self.summary.keys():
-            self.summary[tab].sort_values(by=['Daily_Timestamp','Daily_Remarks','Weekly_Timestamp','Weekly_Remarks'],
+            self.summary[tab].sort_values(by=['Weekly_Timestamp','Weekly_Remarks','Daily_Timestamp','Daily_Remarks'],
                                           ascending=[False,False,False,False], inplace=True)
 
 
@@ -360,7 +360,6 @@ class Stochastic_Monitor():
 
         yag = yagmail.SMTP('samuel.juan.prasetya')
         to = 'sjprasetya.2020@mqf.smu.edu.sg'
-        cc = 'hanii_ming@yahoo.com'
         subject = 'Stochastic Monitor on ' + self.end_date.strftime('%Y-%m-%d')
         attachments = self.file_path
 
