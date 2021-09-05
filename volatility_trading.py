@@ -63,7 +63,7 @@ class Volatility_Trading():
 #%%
 
     # define method to compute signal from stochastic oscillator
-    def get_stochastic_signal(self, start=None, end=None, lookback=15, k_period=5, d_period=5, long_only=True):
+    def get_stochastic_signal(self, start=None, end=None, lookback=29, k_period=18, d_period=14, long_only=True):
 
         # fetch data if not available
         if self.vix is None:
@@ -90,9 +90,9 @@ class Volatility_Trading():
 
         # handle long-only or long-short scenario
         if long_only:
-            ohlc['Signal'] = ohlc['Signal'].apply(lambda x: 1 if x > 0 else 0 if x <= 0 else np.nan)
+            ohlc['Signal'] = ohlc['Signal'].apply(lambda x: 1 if x < 0 else 0 if x >= 0 else np.nan)
         else:
-            ohlc['Signal'] = ohlc['Signal'].apply(lambda x: 1 if x > 0 else -1 if x <= 0 else np.nan)
+            ohlc['Signal'] = ohlc['Signal'].apply(lambda x: 1 if x < 0 else -1 if x >= 0 else np.nan)
 
         # capture signal in attributes
         self.signal = ohlc[['Signal']]
@@ -103,13 +103,13 @@ class Volatility_Trading():
 #%%
 
     # define method to backtest strategy
-    def backtest(self, tc=1, lag=1, plot=True):
+    def backtest(self, tc=1, lag=1, leverage=1, plot=True):
 
         # compute strategy daily return
         df = pd.concat([self.spy['Adj Close'].pct_change(),
                         self.signal.shift(lag+1)], axis=1, join='inner').dropna()
         df.columns = ['Market_Return','Signal']
-        self.daily_return = df['Market_Return'] * df['Signal']
+        self.daily_return = df['Market_Return'] * df['Signal'] * leverage
 
         # include transaction cost
         cost = tc / 10000
@@ -158,11 +158,11 @@ class Volatility_Trading():
 #%%
 
     # define method to optimize backtest parameters
-    def optimize_params(self, start=None, end=None, regularization=2):
+    def optimize_params(self, start=None, end=None, long_only=True, regularization=2):
 
         # set parameters range
-        lookback = range(5, 41, 1)
-        k_period = range(3, 21, 1)
+        lookback = range(5, 31, 1)
+        k_period = range(3, 26, 1)
         d_period = range(3, 21, 1)
 
         # iterate all possible combinations
@@ -182,7 +182,7 @@ class Volatility_Trading():
                 pbar.set_description(f"Evaluating combination {param_combi[i]}")
                 pbar.update()
                 look, k, d = param_combi[i]
-                self.get_stochastic_signal(start=start, end=end, lookback=look, k_period=k, d_period=d)
+                self.get_stochastic_signal(start, end, look, k, d, long_only)
                 self.backtest(plot=False)
                 summary.iloc[i,:] = [look, k, d, self.sharpe, self.max_dd]
         summary['ratio'] = summary['sharpe'] / summary['max_drawdown']
