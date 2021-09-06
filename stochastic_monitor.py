@@ -23,18 +23,23 @@ import os
 class Stochastic_Monitor():
 
     # set default watchlist
-    equities = ['AAPL','ACN','ADBE','AMZN','ASML','BA','BABA','BAC','CLX','CME',
-                'COST','CRM','EL','FB','GOOGL','ICE','ILMN','INTU','JNJ','JPM',
-                'LMT','MA','MCD','MELI','MMM','MSFT','NKE','PEP','PG','0700.HK',
-                'TSM','UNH','UNP','V','VEEV','YUMC']
+    watchlist = {
+        'indices': ['ASHR','DIA','EEM','GXC','KWEB','QQQ','RSP','SPY','^VIX'],
 
-    indices = ['ASHR','DIA','EEM','GXC','KWEB','QQQ','RSP','SPY','^VIX']
+        'equities': ['AAPL','ACN','ADBE','AMZN','ASML','BA','BABA','BAC','CLX','CME',
+                     'COST','CRM','EL','FB','GOOGL','ICE','ILMN','INTU','JNJ','JPM',
+                     'LMT','MA','MCD','MELI','MMM','MSFT','NKE','PEP','PG','0700.HK',
+                     'TSM','UNH','UNP','V','VEEV','YUMC'],
 
-    commods = ['GLD','SLV','PDBC','DBC','COMT','CCRV','BDRY']
+        'reits': ['A17U.SI','AJBU.SI','AU8U.SI','BUOU.SI','BWCU.SI',
+                  'C2PU.SI','C38U.SI','K71U.SI','M44U.SI','N2IU.SI','ME8U.SI'],
 
-    bonds = ['SHY','IEI','IEF','TLT','BND','BNDX','LQD','EMB']
+        'commods': ['GLD','SLV','PDBC','DBC','COMT','CCRV','BDRY'],
 
-    cryptos = ['BTC-USD','ETH-USD','ADA-USD','BNB-USD','LTC-USD','XRP-USD','BCH-USD']
+        'bonds': ['SHY','IEI','IEF','TLT','BND','BNDX','LQD','EMB'],
+
+        'cryptos': ['BTC-USD','ETH-USD','ADA-USD','BNB-USD','LTC-USD','XRP-USD','BCH-USD']
+        }
 
 
     # constructor
@@ -42,7 +47,8 @@ class Stochastic_Monitor():
 
         # set tickers attribute
         if tickers is None:
-            self.tickers = list(set(self.equities + self.indices + self.commods + self.bonds))
+            self.tickers = [ticker for key, value in zip(self.watchlist.keys(), self.watchlist.values()) \
+                            for ticker in self.watchlist[key] if key not in ['cryptos']] # exclude cryptos first
         else:
             if isinstance(tickers, str): tickers = [tickers]
             self.tickers = tickers
@@ -79,13 +85,14 @@ class Stochastic_Monitor():
     def load_data(self):
 
         # fetch data
-        if self.verbose: print(f"\nFetching price data of {len(self.tickers+self.cryptos)} tickers..\n")
+        if self.verbose:
+            print(f"\nFetching price data of {len([ticker for key in self.watchlist.keys() for ticker in self.watchlist[key]])} tickers..\n")
         daily = wb.DataReader(self.tickers, 'yahoo', self.start_date, self.end_date)[['Open','High','Low','Close']]
-        crypto = wb.DataReader(self.cryptos, 'yahoo', self.start_date, self.end_date)[['Open','High','Low','Close']]
+        crypto = wb.DataReader(self.watchlist['cryptos'], 'yahoo', self.start_date, self.end_date)[['Open','High','Low','Close']]
         daily = pd.merge(left=crypto, right=daily, how='outer', left_index=True, right_index=True)
 
-        # update tickers
-        self.tickers += self.cryptos
+        # include cryptos in tickers
+        self.tickers += self.watchlist['cryptos']
 
         # check completeness
         missing = [ticker for ticker in daily.columns.levels[1] if ticker not in self.tickers]
@@ -221,11 +228,8 @@ class Stochastic_Monitor():
 
         # split into different tabs
         self.summary = {}
-        self.summary['Equities'] = summary[summary.index.isin(self.equities)].copy()
-        self.summary['Indices'] = summary[summary.index.isin(self.indices)].copy()
-        self.summary['Commods'] = summary[summary.index.isin(self.commods)].copy()
-        self.summary['Bonds'] = summary[summary.index.isin(self.bonds)].copy()
-        self.summary['Cryptos'] = summary[summary.index.isin(self.cryptos)].copy()
+        for key in self.watchlist.keys():
+            self.summary[key] = summary[summary.index.isin(self.watchlist[key])].copy()
 
         # sort dataframe
         for tab in self.summary.keys():
@@ -239,11 +243,12 @@ class Stochastic_Monitor():
     def create_html_report(self):
 
         # generate html string for each category
-        indices = self.summary['Indices'].to_html().replace('<table border="1" class="dataframe">', '<table id="indices_table">')
-        equities = self.summary['Equities'].to_html().replace('<table border="1" class="dataframe">', '<table id="equities_table">')
-        bonds = self.summary['Bonds'].to_html().replace('<table border="1" class="dataframe">', '<table id="bonds_table">')
-        commods = self.summary['Commods'].to_html().replace('<table border="1" class="dataframe">', '<table id="commods_table">')
-        cryptos = self.summary['Cryptos'].to_html().replace('<table border="1" class="dataframe">', '<table id="cryptos_table">')
+        indices = self.summary['indices'].to_html().replace('<table border="1" class="dataframe">', '<table id="indices_table">')
+        equities = self.summary['equities'].to_html().replace('<table border="1" class="dataframe">', '<table id="equities_table">')
+        reits = self.summary['reits'].to_html().replace('<table border="1" class="dataframe">', '<table id="reits_table">')
+        bonds = self.summary['bonds'].to_html().replace('<table border="1" class="dataframe">', '<table id="bonds_table">')
+        commods = self.summary['commods'].to_html().replace('<table border="1" class="dataframe">', '<table id="commods_table">')
+        cryptos = self.summary['cryptos'].to_html().replace('<table border="1" class="dataframe">', '<table id="cryptos_table">')
 
         sgt = self.end_date.strftime('%d %b %Y ') + 'SGT'
         file_time = dt.datetime.now().strftime('%y%m%d')
@@ -305,6 +310,7 @@ class Stochastic_Monitor():
             <br>
             <button onclick="toggleElements('#indices', '.stochastic')"> Global Indices </button>
             <button onclick="toggleElements('#equities', '.stochastic')"> Global Equities </button>
+            <button onclick="toggleElements('#reits', '.stochastic')"> Global REITs </button>
             <button onclick="toggleElements('#bonds', '.stochastic')"> Global Bonds </button>
             <button onclick="toggleElements('#commods', '.stochastic')"> Commodities </button>
             <button onclick="toggleElements('#cryptos', '.stochastic')"> Cryptocurrencies </button>
@@ -319,6 +325,12 @@ class Stochastic_Monitor():
             <div class="stochastic" id="equities" style="display: none;">
             <h2> Global Equities </h2>
             ''' + equities + '''
+            <br>
+            </div>
+
+            <div class="stochastic" id="reits" style="display: none;">
+            <h2> Global REITs </h2>
+            ''' + reits + '''
             <br>
             </div>
 
