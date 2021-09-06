@@ -233,7 +233,7 @@ class Stochastic_Monitor():
 
         # sort dataframe
         for tab in self.summary.keys():
-            self.summary[tab].sort_values(by=['Weekly_Timestamp','Daily_Timestamp','Weekly_Remarks','Daily_Remarks'],
+            self.summary[tab].sort_values(by=['Weekly_Timestamp','Weekly_Remarks','Daily_Timestamp','Daily_Remarks'],
                                           ascending=[False,False,False,False], inplace=True)
 
 
