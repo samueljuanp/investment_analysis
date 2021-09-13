@@ -11,11 +11,13 @@ pd.set_option('display.max_rows', 20)
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 100)
 from pandas.tseries.offsets import BDay
+from yahoofinancials import YahooFinancials as yf
 
 import pandas_datareader as wb
 import datetime as dt
 import numpy as np
 import yagmail
+import json
 import os
 
 
@@ -67,6 +69,7 @@ class Technical_Watchlist():
         self.daily = {}
         self.weekly = {}
         self.summary = {}
+        self.fundamentals = {}
         self.html_tables = {}
         self.html_string = None
         self.file_path = None
@@ -265,6 +268,63 @@ class Technical_Watchlist():
                 self.summary[ticker]['Weekly Trend'] = 'Uptrend'
             elif self.weekly[ticker]['EMA_Cross'].iloc[-1] < 0:
                 self.summary[ticker]['Weekly Trend'] = 'Downtrend'
+
+
+#%%
+
+    # obtain equity fundamentals data
+    def get_fundamentals(self, update=False):
+
+        # loop over equity tickers
+        for ticker in self.watchlist['equities']:
+
+            # prepare dictionary
+            self.fundamentals[ticker] = {}
+
+            # retrieve data from yahoo financials (will take long time)
+            bsheet = yf(ticker).get_financial_stmts('quarter','balance')
+            income = yf(ticker).get_financial_stmts('quarter','income')
+            cash = yf(ticker).get_financial_stmts('quarter','cash')
+
+            # populate balance sheet data
+            for item in bsheet['balanceSheetHistoryQuarterly'][ticker]:
+                for date, bsheet_subitem in item.items():
+                    self.fundamentals[ticker][date] = bsheet_subitem
+
+            # populate income statement data
+            for item in income['incomeStatementHistoryQuarterly'][ticker]:
+                for date, income_subitem in item.items():
+                    self.fundamentals[ticker][date].update(income_subitem)
+
+            # populate cashflow data
+            for item in cash['cashflowStatementHistoryQuarterly'][ticker]:
+                for date, cash_subitem in item.items():
+                    self.fundamentals[ticker][date].update(cash_subitem)
+
+        # store data externally
+        with open('fundamental_database.json','w') as f:
+            json.dump(self.fundamentals, f)
+        f.close()
+
+        # retrieve stored data
+        g = open('fundamental_database.json')
+        self.fundamentals = json.load(g)
+        g.close()
+
+        # populate fcf/a and gp/a ratio
+        df = pd.DataFrame(index=tech.watchlist['equities'], columns=['FCF/A','GP/A'])
+        for ticker in self.watchlist['equities']:
+            latest_date = list(self.fundamentals[ticker].keys())[0]
+            asset = self.fundamentals[ticker][latest_date].get('totalAssets')
+            gp = self.fundamentals[ticker][latest_date].get('grossProfit')
+            cash = self.fundamentals[ticker][latest_date].get('totalCashFromOperatingActivities')
+            capex = self.fundamentals[ticker][latest_date].get('capitalExpenditures')
+            try:
+                fcf = cash + capex
+                df.loc[ticker,'FCF/A'] = fcf / asset
+            except:
+                df.loc[ticker,'FCF/A'] = cash / asset
+            df.loc[ticker,'GP/A'] = gp / asset
 
 
 #%%
@@ -545,6 +605,6 @@ class Technical_Watchlist():
 #%%
 
 # run program
-tech = Technical_Watchlist()
-tech.main(True)
+#tech = Technical_Watchlist()
+#tech.main(True)
 
