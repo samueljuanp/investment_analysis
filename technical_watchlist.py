@@ -419,23 +419,24 @@ class Technical_Watchlist():
                 color: #ffffff;
               }
 
-              td:nth-child(4) {border-right: 1.1px solid black}
-              td:nth-child(7) {border-right: 1.1px solid black}
-              td:nth-last-child(4) {border-left: 1.1px solid black}
+              td:nth-child(4) {border-right: 1.2px solid black}
+              td:nth-child(7) {border-right: 1px solid black}
+              td:nth-last-child(4) {border-left: 1.2px solid black}
 
               tr:nth-child(even) {background-color: #eee}
               tr:nth-child(odd) {background-color: #fff}
 
-              tr:hover {background-color: #4f6bed50;}
-              button:focus {background-color: #ff5f2b50;}
+              tr:hover {background-color: #4f6bed50}
+              button:focus {background-color: #ff5f2b50}
 
               .very_bullish {background-color: lime; color: dimgray; font-weight: bold}
               .bullish {background-color: darkgreen; color: white}
               .bearish {background-color: darkred; color: white}
               .very_bearish {background-color: red; color: white; font-weight: bold}
-              .uptrend {background-color: green; font-weight: 400; color: white}
-              .downtrend {background-color: firebrick; font-weight: 400; color: white}
-              .ambiguous {background-color: darkorange; font-weight: bold}
+
+              .uptrend {background-color: green; font-weight: 400; color: white; opacity: 0.9}
+              .downtrend {background-color: firebrick; font-weight: 400; color: white; opacity: 0.9}
+              .ambiguous {background-color: darkorange; font-weight: bold; opacity: 0.9}
               .old {opacity: 0.3}
             </style>
 
@@ -459,7 +460,7 @@ class Technical_Watchlist():
                 medium_trend = document.querySelectorAll("td:nth-child(10)");
                 daily_k = document.querySelectorAll("td:nth-child(11)");
                 daily_d = document.querySelectorAll("td:nth-child(12)");
-                daily_remark = document.querySelectorAll("td:nth-child(13)");
+                daily_trend = document.querySelectorAll("td:nth-child(13)");
                 daily_time = document.querySelectorAll("td:nth-last-child(1)");
 
                 current_time = Date.parse(Date());
@@ -467,6 +468,14 @@ class Technical_Watchlist():
                 oversold = 25; overbought = 85;
 
                 for(i = 0 ; i < last_price.length ; i++) {
+
+                  if(parseFloat(last_price[i].textContent) > parseFloat(sma_200[i].textContent)) {
+                    sma_200[i].style.color = "forestgreen"
+                    }
+
+                  if(parseFloat(last_price[i].textContent) < parseFloat(sma_200[i].textContent)) {
+                    sma_200[i].style.color = "crimson"
+                    }
 
                   if(parseFloat(momentum[i].textContent) > 0) {
                     momentum[i].style.color = "forestgreen";
@@ -500,26 +509,24 @@ class Technical_Watchlist():
                     weekly_k[i].bgColor = "lemonchiffon"; weekly_d[i].bgColor = "lemonchiffon"
                   }
 
-                  day_trd = daily_remark[i].textContent
+                  day_trd = daily_trend[i].textContent
                   med_trd = medium_trend[i].textContent
-                  week_trd = weekly_remark[i].textContent
+                  week_trd = weekly_trend[i].textContent
 
                   if(day_trd == "Very Bullish") daily_trend[i].classList.add("very_bullish");
                   if(day_trd == "Bullish") daily_trend[i].classList.add("bullish");
                   if(day_trd == "Bearish") daily_trend[i].classList.add("bearish");
                   if(day_trd == "Very Bearish") daily_trend[i].classList.add("very_bearish");
 
-                  if(week_trd == "Very Bullish") weekly_trend[i].classList.add("very_bullish");
-                  if(week_trd == "Bullish") weekly_trend[i].classList.add("bullish");
-                  if(week_trd == "Bearish") weekly_trend[i].classList.add("bearish");
-                  if(week_trd == "Very Bearish") weekly_trend[i].classList.add("very_bearish");
+                  if(week_trd == "Uptrend") weekly_trend[i].classList.add("uptrend");
+                  if(week_trd == "Downtrend") weekly_trend[i].classList.add("downtrend");
 
                   if(med_trd == "Uptrend") medium_trend[i].classList.add("uptrend");
                   if(med_trd == "Downtrend") medium_trend[i].classList.add("downtrend");
                   if(med_trd == "Ambiguous") medium_trend[i].classList.add("ambiguous");
 
                   if(Math.abs(current_time - Date.parse(daily_time[i].textContent)) / one_day > 8.1) {
-                    daily_remark[i].classList.add("old")
+                    daily_trend[i].classList.add("old")
                   }
                 }
               }
