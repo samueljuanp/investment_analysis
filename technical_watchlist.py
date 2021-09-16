@@ -82,7 +82,7 @@ class Technical_Watchlist():
 
         self.load_data()
         self.get_stochastic_signal()
-        self.get_weekly_trend()
+        self.get_medium_trend()
         self.format_display()
         self.create_html_report()
         self.send_email(send=send)
@@ -140,12 +140,10 @@ class Technical_Watchlist():
 #%%
 
     # compute stochastic signal
-    def get_stochastic_signal(self, ma='smoothed', daily_lookback=9, weekly_lookback=5,
-                              k_period=3, d_period=3, oversold=25, overbought=85):
+    def get_stochastic_signal(self, ma='smoothed', lookback=9, k_period=3, d_period=3, oversold=25, overbought=85):
 
         # name parameters
-        self.daily_pct_k = ' %K(' + str(daily_lookback) + ',' + str(k_period) + ')'
-        self.weekly_pct_k = ' %K(' + str(weekly_lookback) + ',' + str(k_period) + ')'
+        self.pct_k = ' %K(' + str(lookback) + ',' + str(k_period) + ')'
         self.pct_d = ' %D(' + str(d_period) + ')'
 
         # print status
@@ -168,18 +166,13 @@ class Technical_Watchlist():
                     self.summary[ticker]['Last Price'] = ohlc.iloc[-1]['Close']
                     self.summary[ticker]['6M Change'] = ohlc['Close'].pct_change(120).iloc[-1]
 
-                    # compute rolling high and low during lookback period
-                    ohlc['Rolling_High'] = ohlc['High'].rolling(window=daily_lookback).max()
-                    ohlc['Rolling_Low'] = ohlc['Low'].rolling(window=daily_lookback).min()
-
                 else:
                     ohlc = self.weekly[ticker]
                     timeframe = 'Weekly'
 
-                    # compute rolling high and low during lookback period
-                    ohlc['Rolling_High'] = ohlc['High'].rolling(window=weekly_lookback).max()
-                    ohlc['Rolling_Low'] = ohlc['Low'].rolling(window=weekly_lookback).min()
-
+                # compute rolling high and low during lookback period
+                ohlc['Rolling_High'] = ohlc['High'].rolling(window=lookback).max()
+                ohlc['Rolling_Low'] = ohlc['Low'].rolling(window=lookback).min()
 
                 # compute %K
                 ohlc['%K'] = ((ohlc['Close']-ohlc['Rolling_Low']) / (ohlc['Rolling_High']-ohlc['Rolling_Low'])) * 100
@@ -202,75 +195,87 @@ class Technical_Watchlist():
                 else:
                     print(f"Supported moving averages: simple, exponential, smoothed. {ma} was passed..")
 
-                # compute turning point at daily timeframe
-                if i == 0:
+                # compute crossover and change in signal
+                ohlc['Stoch_Cross'] = ohlc['Full_K'] - ohlc['Full_D']
+                ohlc['Stoch_Change'] = np.sign(ohlc['Stoch_Cross']).diff()
+                ohlc['Stoch_Remark'] = ''
 
-                    # compute crossover and change in signal
-                    ohlc['Stoch_Cross'] = ohlc['Full_K'] - ohlc['Full_D']
-                    ohlc['Stoch_Change'] = np.sign(ohlc['Stoch_Cross']).diff()
-                    ohlc['Stoch_Remark'] = ''
+                # compute turning point
+                for j in range(1, len(ohlc)):
 
-                    # give daily remark
-                    for j in range(1, len(ohlc)):
+                    # reference
+                    date = ohlc.index[j]
+                    change_now = ohlc.iloc[j]['Stoch_Change']
+                    prev_k = ohlc.iloc[j-1]['Full_K']
+                    prev_d = ohlc.iloc[j-1]['Full_D']
 
-                        # reference
-                        date = ohlc.index[j]
-                        change_now = ohlc.iloc[j]['Stoch_Change']
-                        prev_k = ohlc.iloc[j-1]['Full_K']
-                        prev_d = ohlc.iloc[j-1]['Full_D']
+                    # bullish signal
+                    if change_now > 0:
+                        if (prev_k <= oversold) and (prev_d <= oversold):
+                            ohlc.loc[date,'Stoch_Remark'] = 'Very Bullish'
+                        else:
+                            ohlc.loc[date,'Stoch_Remark'] = 'Bullish'
 
-                        # bullish signal
-                        if change_now > 0:
-                            if (prev_k <= oversold) and (prev_d <= oversold):
-                                ohlc.loc[date,'Stoch_Remark'] = 'Very Bullish'
-                            else:
-                                ohlc.loc[date,'Stoch_Remark'] = 'Bullish'
+                    # bearish signal
+                    elif change_now < 0:
+                        if (prev_k >= overbought) and (prev_d >= overbought):
+                            ohlc.loc[date,'Stoch_Remark'] = 'Very Bearish'
+                        else:
+                            ohlc.loc[date,'Stoch_Remark'] = 'Bearish'
 
-                        # bearish signal
-                        elif change_now < 0:
-                            if (prev_k >= overbought) and (prev_d >= overbought):
-                                ohlc.loc[date,'Stoch_Remark'] = 'Very Bearish'
-                            else:
-                                ohlc.loc[date,'Stoch_Remark'] = 'Bearish'
+                    # no confirmed signal
+                    else: pass
 
-                        # no confirmed signal
-                        else: pass
+                # assign to summary attribute
+                self.summary[ticker][str(timeframe) + self.pct_k] = ohlc.iloc[-1]['Full_K'] # live
+                self.summary[ticker][str(timeframe) + self.pct_d] = ohlc.iloc[-1]['Full_D'] # live
+                self.summary[ticker][str(timeframe) + ' Remark'] = ohlc[ohlc['Stoch_Remark'] != ''].iloc[-1]['Stoch_Remark']
+                self.summary[ticker][str(timeframe) + ' Time'] = ohlc[ohlc['Stoch_Remark'] != ''].index[-1]
 
-                    # assign to summary attribute
-                    self.summary[ticker][str(timeframe) + self.daily_pct_k] = ohlc.iloc[-1]['Full_K']
-                    self.summary[ticker][str(timeframe) + self.pct_d] = ohlc.iloc[-1]['Full_D']
-                    self.summary[ticker][str(timeframe) + ' Remark'] = ohlc[ohlc['Stoch_Remark'] != ''].iloc[-1]['Stoch_Remark']
-                    self.summary[ticker][str(timeframe) + ' Time'] = ohlc[ohlc['Stoch_Remark'] != ''].index[-1]
-
-                # identify trend at weekly timeframe
-                else:
-                    self.summary[ticker][str(timeframe) + self.weekly_pct_k] = ohlc.iloc[-1]['Full_K']
-                    self.summary[ticker][str(timeframe) + self.pct_d] = ohlc.iloc[-1]['Full_D']
+                # assign weekly trend
+                if i == 1:
+                    if ohlc.iloc[-1]['Full_K'] > ohlc.iloc[-1]['Full_D']:
+                        self.summary[ticker][str(timeframe) + ' Trend'] = 'Uptrend'
+                    else:
+                        self.summary[ticker][str(timeframe) + ' Trend'] = 'Downtrend'
 
 
 #%%
 
     # compute moving averages
-    def get_weekly_trend(self):
+    def get_medium_trend(self):
 
-        if self.verbose: print(f"Computing weekly EMA for {len(self.tickers)} tickers..")
+        if self.verbose: print(f"Computing moving averages for {len(self.tickers)} tickers..")
 
         # loop over all tickers
         for ticker in self.tickers:
-            # compute weekly ema
-            self.weekly[ticker]['EMA(20)'] = self.weekly[ticker]['Close'].ewm(span=20).mean()
-            self.weekly[ticker]['EMA(40)'] = self.weekly[ticker]['Close'].ewm(span=40).mean()
-            self.weekly[ticker]['EMA_Cross'] = self.weekly[ticker]['EMA(20)'] / self.weekly[ticker]['EMA(40)'] - 1
+            # compute daily ema and sma
+            self.daily[ticker]['EMA(20)'] = self.daily[ticker]['Close'].ewm(span=20).mean()
+            self.daily[ticker]['EMA(40)'] = self.daily[ticker]['Close'].ewm(span=40).mean()
+            self.daily[ticker]['SMA(50)'] = self.daily[ticker]['Close'].rolling(window=50).mean()
+            self.daily[ticker]['SMA(100)'] = self.daily[ticker]['Close'].rolling(window=100).mean()
+            self.daily[ticker]['SMA(150)'] = self.daily[ticker]['Close'].rolling(window=150).mean()
+            self.daily[ticker]['SMA(200)'] = self.daily[ticker]['Close'].rolling(window=200).mean()
+
+            # compute ma cross
+            self.daily[ticker]['EMA_Cross'] = self.daily[ticker]['EMA(20)'] / self.daily[ticker]['EMA(40)'] - 1
+            self.daily[ticker]['SMA_Cross'] = self.daily[ticker]['SMA(50)'] / self.daily[ticker]['SMA(150)'] - 1
 
             # assign latest value
-            self.summary[ticker]['EMA(20) / (40)'] = self.weekly[ticker]['EMA_Cross'].iloc[-1]
-            if self.weekly[ticker]['EMA_Cross'].iloc[-1] > 0:
-                self.summary[ticker]['Weekly Trend'] = 'Uptrend'
-            elif self.weekly[ticker]['EMA_Cross'].iloc[-1] < 0:
-                self.summary[ticker]['Weekly Trend'] = 'Downtrend'
+            self.summary[ticker]['EMA(20) / (40)'] = self.daily[ticker]['EMA_Cross'].iloc[-1]
+            self.summary[ticker]['SMA(50) / (150)'] = self.daily[ticker]['SMA_Cross'].iloc[-1]
+            self.summary[ticker]['SMA(200)'] = self.daily[ticker]['SMA(200)'].iloc[-1]
+
+            # assign medium trend remarks (CONDITIONS TO BE IMPROVED)
+            if self.daily[ticker]['SMA_Cross'].iloc[-1] > 0:
+                self.summary[ticker]['Medium Trend'] = 'Uptrend'
+            else:
+                self.summary[ticker]['Medium Trend'] = 'Downtrend'
 
 
 #%%
+
+    ############# UNDER DEVELOPMENT ##############
 
     # obtain equity fundamentals data
     def get_fundamentals(self, update=False):
@@ -326,6 +331,8 @@ class Technical_Watchlist():
                 df.loc[ticker,'FCF/A'] = cash / asset
             df.loc[ticker,'GP/A'] = gp / asset
 
+    ############# UNDER DEVELOPMENT ##############
+
 
 #%%
 
@@ -337,18 +344,21 @@ class Technical_Watchlist():
 
         # rearrange columns
         summary = summary[['Last Price','6M Change', \
-                           'Daily'+self.daily_pct_k,'Daily'+self.pct_d,'Daily Remark','Daily Time', \
-                           'Weekly'+self.weekly_pct_k,'Weekly'+self.pct_d,'EMA(20) / (40)','Weekly Trend', \
+                           'Weekly'+self.pct_k,'Weekly'+self.pct_d,'Weekly Remark','Weekly Time', \
+                           'EMA(20) / (40)','SMA(50) / (150)','SMA(200)','Medium Trend', \
+                           'Daily'+self.pct_k,'Daily'+self.pct_d,'Daily Remark','Daily Time', \
                            ]]
 
         # format display
         dec_2dp = lambda x: str('{:.2f}'.format(x))
         pct_2dp = lambda x: str('{:.2f}%'.format(x*100))
 
-        no_format = ['6M Change','Daily Remark','Daily Time','EMA(20) / (40)','Weekly Trend']
+        no_format = ['6M Change','Daily Remark','Daily Time','EMA(20) / (40)','SMA(50) / (150)',
+                     'Medium Trend','Weekly Remark','Weekly Time']
         summary.loc[:, [col for col in summary.columns if col not in no_format]] = \
         summary.loc[:, [col for col in summary.columns if col not in no_format]].applymap(dec_2dp).values
-        summary[['6M Change','EMA(20) / (40)']] = summary[['6M Change','EMA(20) / (40)']].applymap(pct_2dp).values
+        summary[['6M Change','EMA(20) / (40)','SMA(50) / (150)']] = \
+        summary[['6M Change','EMA(20) / (40)','SMA(50) / (150)']].applymap(pct_2dp).values
 
         # split into different tabs
         self.summary = {}
@@ -357,8 +367,8 @@ class Technical_Watchlist():
 
         # sort dataframe
         for tab in self.summary.keys():
-            self.summary[tab].sort_values(by=['Daily Time','Daily Remark','Weekly Trend'],
-                                          ascending=[False,False,False], inplace=True)
+            self.summary[tab].sort_values(by=['Weekly Time','Weekly Remark','Daily Time','Daily Remark'],
+                                          ascending=[False,False,False, False], inplace=True)
 
 
 #%%
@@ -369,13 +379,6 @@ class Technical_Watchlist():
         # generate html string for each category
         for key in self.summary.keys():
             self.html_tables[key] = self.summary[key].to_html().replace('<table border="1" class="dataframe">', f'<table id="{key}_table">')
-
-        #indices = self.summary['indices'].to_html().replace('<table border="1" class="dataframe">', '<table id="indices_table">')
-        #equities = self.summary['equities'].to_html().replace('<table border="1" class="dataframe">', '<table id="equities_table">')
-        #reits = self.summary['reits'].to_html().replace('<table border="1" class="dataframe">', '<table id="reits_table">')
-        #bonds = self.summary['bonds'].to_html().replace('<table border="1" class="dataframe">', '<table id="bonds_table">')
-        #commods = self.summary['commods'].to_html().replace('<table border="1" class="dataframe">', '<table id="commods_table">')
-        #cryptos = self.summary['cryptos'].to_html().replace('<table border="1" class="dataframe">', '<table id="cryptos_table">')
 
         sgt = self.end_date.strftime('%d %B %Y %H:%M ') + 'Singapore'
         file_time = dt.datetime.now().strftime('%y%m%d_%H%M')
@@ -414,6 +417,7 @@ class Technical_Watchlist():
 
               td:nth-child(3) {border-right: 1.1px solid black}
               td:nth-child(7) {border-right: 1.1px solid black}
+              td:nth-child(11) {border-right: 1.1px solid black}
 
               tr:nth-child(even) {background-color: #eee}
               tr:nth-child(odd) {background-color: #fff}
@@ -445,9 +449,14 @@ class Technical_Watchlist():
                 daily_d = document.querySelectorAll("td:nth-child(5)");
                 daily_remark = document.querySelectorAll("td:nth-child(6)");
                 daily_time = document.querySelectorAll("td:nth-child(7)");
-                weekly_k = document.querySelectorAll("td:nth-child(8)");
-                weekly_d = document.querySelectorAll("td:nth-child(9)");
-                weekly_trend = document.querySelectorAll("td:nth-last-child(1)");
+                ema_2040 = document.querySelectorAll("td:nth-child(8)");
+                sma_50150 = document.querySelectorAll("td:nth-child(9)");
+                sma_200 = document.querySelectorAll("td:nth-child(10)");
+                medium_trend = document.querySelectorAll("td:nth-child(11)");
+                weekly_k = document.querySelectorAll("td:nth-child(12)");
+                weekly_d = document.querySelectorAll("td:nth-child(13)");
+                weekly_remark = document.querySelectorAll("td:nth-child(14)");
+                weekly_time = document.querySelectorAll("td:nth-last-child(1)");
 
                 current_time = Date.parse(Date());
                 one_day = 24*60*60*1000;
@@ -488,17 +497,30 @@ class Technical_Watchlist():
                   }
 
                   day_rmk = daily_remark[i].textContent
-                  week_trd = weekly_trend[i].textContent
+                  med_trd = medium_trend[i].textContent
+                  week_rmk = weekly_remark[i].textContent
 
                   if(day_rmk == "Very Bullish") daily_remark[i].classList.add("very_bullish");
                   if(day_rmk == "Bullish") daily_remark[i].classList.add("bullish");
                   if(day_rmk == "Bearish") daily_remark[i].classList.add("bearish");
                   if(day_rmk == "Very Bearish") daily_remark[i].classList.add("very_bearish");
-                  if(week_trd == "Uptrend") weekly_trend[i].classList.add("uptrend");
-                  if(week_trd == "Downtrend") weekly_trend[i].classList.add("downtrend");
+
+                  if(week_rmk == "Very Bullish") weekly_remark[i].classList.add("very_bullish");
+                  if(week_rmk == "Bullish") weekly_remark[i].classList.add("bullish");
+                  if(week_rmk == "Bearish") weekly_remark[i].classList.add("bearish");
+                  if(week_rmk == "Very Bearish") weekly_remark[i].classList.add("very_bearish");
+
+                  if(med_trd == "Uptrend") medium_trend[i].classList.add("uptrend");
+                  if(med_trd == "Downtrend") medium_trend[i].classList.add("downtrend");
+
                   if(Math.abs(current_time - Date.parse(daily_time[i].textContent)) / one_day > 7.1) {
                     daily_remark[i].classList.add("old")
                   }
+
+                  if(Math.abs(current_time - Date.parse(weekly_time[i].textContent)) / one_day > 7.1) {
+                    weekly_remark[i].classList.add("old")
+                  }
+
                 }
               }
             </script>
@@ -605,6 +627,6 @@ class Technical_Watchlist():
 #%%
 
 # run program
-#tech = Technical_Watchlist()
-#tech.main(True)
+tech = Technical_Watchlist()
+tech.main(True)
 
