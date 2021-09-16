@@ -229,8 +229,11 @@ class Technical_Watchlist():
                 # assign to summary attribute
                 self.summary[ticker][str(timeframe) + self.pct_k] = ohlc.iloc[-1]['Full_K'] # live
                 self.summary[ticker][str(timeframe) + self.pct_d] = ohlc.iloc[-1]['Full_D'] # live
-                self.summary[ticker][str(timeframe) + ' Remark'] = ohlc[ohlc['Stoch_Remark'] != ''].iloc[-1]['Stoch_Remark']
-                self.summary[ticker][str(timeframe) + ' Time'] = ohlc[ohlc['Stoch_Remark'] != ''].index[-1]
+
+                # assign daily turning timestamp
+                if i == 0:
+                    self.summary[ticker][str(timeframe) + ' Trend'] = ohlc[ohlc['Stoch_Remark'] != ''].iloc[-1]['Stoch_Remark']
+                    self.summary[ticker][str(timeframe) + ' Time'] = ohlc[ohlc['Stoch_Remark'] != ''].index[-1]
 
                 # assign weekly trend
                 if i == 1:
@@ -266,12 +269,13 @@ class Technical_Watchlist():
             self.summary[ticker]['SMA(50) / (150)'] = self.daily[ticker]['SMA_Cross'].iloc[-1]
             self.summary[ticker]['SMA(200)'] = self.daily[ticker]['SMA(200)'].iloc[-1]
 
-            # assign medium trend remarks (CONDITIONS TO BE IMPROVED)
-            if self.daily[ticker]['SMA_Cross'].iloc[-1] > 0:
+            # assign medium trend remarks
+            if self.daily[ticker]['SMA_Cross'].iloc[-1] > 0 and self.daily[ticker]['EMA_Cross'].iloc[-1] > 0:
                 self.summary[ticker]['Medium Trend'] = 'Uptrend'
-            else:
+            elif self.daily[ticker]['SMA_Cross'].iloc[-1] <= 0 and self.daily[ticker]['EMA_Cross'].iloc[-1] <= 0:
                 self.summary[ticker]['Medium Trend'] = 'Downtrend'
-
+            else:
+                self.summary[ticker]['Medium Trend'] = 'Ambiguous'
 
 #%%
 
@@ -343,18 +347,18 @@ class Technical_Watchlist():
         summary = pd.DataFrame(self.summary).T.copy()
 
         # rearrange columns
-        summary = summary[['Last Price','6M Change', \
-                           'Weekly'+self.pct_k,'Weekly'+self.pct_d,'Weekly Remark','Weekly Time', \
-                           'EMA(20) / (40)','SMA(50) / (150)','SMA(200)','Medium Trend', \
-                           'Daily'+self.pct_k,'Daily'+self.pct_d,'Daily Remark','Daily Time', \
+        summary = summary[['Last Price','SMA(200)','6M Change', \
+                           'Weekly'+self.pct_k,'Weekly'+self.pct_d,'Weekly Trend', \
+                           'EMA(20) / (40)','SMA(50) / (150)','Medium Trend', \
+                           'Daily'+self.pct_k,'Daily'+self.pct_d,'Daily Trend','Daily Time', \
                            ]]
 
         # format display
         dec_2dp = lambda x: str('{:.2f}'.format(x))
         pct_2dp = lambda x: str('{:.2f}%'.format(x*100))
 
-        no_format = ['6M Change','Daily Remark','Daily Time','EMA(20) / (40)','SMA(50) / (150)',
-                     'Medium Trend','Weekly Remark','Weekly Time']
+        no_format = ['6M Change','Daily Trend','Daily Time','EMA(20) / (40)','SMA(50) / (150)',
+                     'Medium Trend','Weekly Trend','Weekly Time']
         summary.loc[:, [col for col in summary.columns if col not in no_format]] = \
         summary.loc[:, [col for col in summary.columns if col not in no_format]].applymap(dec_2dp).values
         summary[['6M Change','EMA(20) / (40)','SMA(50) / (150)']] = \
@@ -367,8 +371,8 @@ class Technical_Watchlist():
 
         # sort dataframe
         for tab in self.summary.keys():
-            self.summary[tab].sort_values(by=['Weekly Time','Weekly Remark','Daily Time','Daily Remark'],
-                                          ascending=[False,False,False, False], inplace=True)
+            self.summary[tab].sort_values(by=['Daily Time','Daily Trend'],
+                                          ascending=[False,False], inplace=True)
 
 
 #%%
@@ -402,7 +406,7 @@ class Technical_Watchlist():
                 text-align: center;
                 font-size: 13px;
                 table-layout: fixed;
-                width: 100px;
+                width: 90px;
               }
 
               td, th {
@@ -415,9 +419,9 @@ class Technical_Watchlist():
                 color: #ffffff;
               }
 
-              td:nth-child(3) {border-right: 1.1px solid black}
+              td:nth-child(4) {border-right: 1.1px solid black}
               td:nth-child(7) {border-right: 1.1px solid black}
-              td:nth-child(11) {border-right: 1.1px solid black}
+              td:nth-last-child(4) {border-left: 1.1px solid black}
 
               tr:nth-child(even) {background-color: #eee}
               tr:nth-child(odd) {background-color: #fff}
@@ -431,6 +435,7 @@ class Technical_Watchlist():
               .very_bearish {background-color: red; color: white; font-weight: bold}
               .uptrend {background-color: green; font-weight: 400; color: white}
               .downtrend {background-color: firebrick; font-weight: 400; color: white}
+              .ambiguous {background-color: darkorange; font-weight: bold}
               .old {opacity: 0.3}
             </style>
 
@@ -444,19 +449,18 @@ class Technical_Watchlist():
             <script>
               function color_code() {
                 last_price = document.querySelectorAll("td:nth-child(2)");
-                momentum = document.querySelectorAll("td:nth-child(3)");
-                daily_k = document.querySelectorAll("td:nth-child(4)");
-                daily_d = document.querySelectorAll("td:nth-child(5)");
-                daily_remark = document.querySelectorAll("td:nth-child(6)");
-                daily_time = document.querySelectorAll("td:nth-child(7)");
+                sma_200 = document.querySelectorAll("td:nth-child(3)");
+                momentum = document.querySelectorAll("td:nth-child(4)");
+                weekly_k = document.querySelectorAll("td:nth-child(5)");
+                weekly_d = document.querySelectorAll("td:nth-child(6)");
+                weekly_trend = document.querySelectorAll("td:nth-child(7)");
                 ema_2040 = document.querySelectorAll("td:nth-child(8)");
                 sma_50150 = document.querySelectorAll("td:nth-child(9)");
-                sma_200 = document.querySelectorAll("td:nth-child(10)");
-                medium_trend = document.querySelectorAll("td:nth-child(11)");
-                weekly_k = document.querySelectorAll("td:nth-child(12)");
-                weekly_d = document.querySelectorAll("td:nth-child(13)");
-                weekly_remark = document.querySelectorAll("td:nth-child(14)");
-                weekly_time = document.querySelectorAll("td:nth-last-child(1)");
+                medium_trend = document.querySelectorAll("td:nth-child(10)");
+                daily_k = document.querySelectorAll("td:nth-child(11)");
+                daily_d = document.querySelectorAll("td:nth-child(12)");
+                daily_remark = document.querySelectorAll("td:nth-child(13)");
+                daily_time = document.querySelectorAll("td:nth-last-child(1)");
 
                 current_time = Date.parse(Date());
                 one_day = 24*60*60*1000;
@@ -496,31 +500,27 @@ class Technical_Watchlist():
                     weekly_k[i].bgColor = "lemonchiffon"; weekly_d[i].bgColor = "lemonchiffon"
                   }
 
-                  day_rmk = daily_remark[i].textContent
+                  day_trd = daily_remark[i].textContent
                   med_trd = medium_trend[i].textContent
-                  week_rmk = weekly_remark[i].textContent
+                  week_trd = weekly_remark[i].textContent
 
-                  if(day_rmk == "Very Bullish") daily_remark[i].classList.add("very_bullish");
-                  if(day_rmk == "Bullish") daily_remark[i].classList.add("bullish");
-                  if(day_rmk == "Bearish") daily_remark[i].classList.add("bearish");
-                  if(day_rmk == "Very Bearish") daily_remark[i].classList.add("very_bearish");
+                  if(day_trd == "Very Bullish") daily_trend[i].classList.add("very_bullish");
+                  if(day_trd == "Bullish") daily_trend[i].classList.add("bullish");
+                  if(day_trd == "Bearish") daily_trend[i].classList.add("bearish");
+                  if(day_trd == "Very Bearish") daily_trend[i].classList.add("very_bearish");
 
-                  if(week_rmk == "Very Bullish") weekly_remark[i].classList.add("very_bullish");
-                  if(week_rmk == "Bullish") weekly_remark[i].classList.add("bullish");
-                  if(week_rmk == "Bearish") weekly_remark[i].classList.add("bearish");
-                  if(week_rmk == "Very Bearish") weekly_remark[i].classList.add("very_bearish");
+                  if(week_trd == "Very Bullish") weekly_trend[i].classList.add("very_bullish");
+                  if(week_trd == "Bullish") weekly_trend[i].classList.add("bullish");
+                  if(week_trd == "Bearish") weekly_trend[i].classList.add("bearish");
+                  if(week_trd == "Very Bearish") weekly_trend[i].classList.add("very_bearish");
 
                   if(med_trd == "Uptrend") medium_trend[i].classList.add("uptrend");
                   if(med_trd == "Downtrend") medium_trend[i].classList.add("downtrend");
+                  if(med_trd == "Ambiguous") medium_trend[i].classList.add("ambiguous");
 
-                  if(Math.abs(current_time - Date.parse(daily_time[i].textContent)) / one_day > 7.1) {
+                  if(Math.abs(current_time - Date.parse(daily_time[i].textContent)) / one_day > 8.1) {
                     daily_remark[i].classList.add("old")
                   }
-
-                  if(Math.abs(current_time - Date.parse(weekly_time[i].textContent)) / one_day > 7.1) {
-                    weekly_remark[i].classList.add("old")
-                  }
-
                 }
               }
             </script>
@@ -609,14 +609,14 @@ class Technical_Watchlist():
             cond_one = self.summary[key]['Daily Time'] == ytd
             cond_two = self.summary[key]['Daily Time'] == today
             daily_turn = self.summary[key][(cond_one) | (cond_two)]
-            daily_turn = daily_turn.sort_values(by='Daily Remark', ascending=False)
+            daily_turn = daily_turn.sort_values(by='Daily Trend', ascending=False)
 
             if not daily_turn.empty:
                 body += '<h3><u>' + key.capitalize() + ' </u></h3>'
 
                 highlight = []
                 for i in range(len(daily_turn)):
-                    highlight.append(str(daily_turn.index[i] + ' (' + daily_turn.iloc[i]['Daily Remark'] + ')'))
+                    highlight.append(str(daily_turn.index[i] + ' (' + daily_turn.iloc[i]['Daily Trend'] + ')'))
 
                 # attach to email body
                 body += '<br>'.join(highlight) + '<br><br>'
