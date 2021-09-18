@@ -634,6 +634,14 @@ class Technical_Watchlist():
 #%%
 
 # run program
-tech = Technical_Watchlist()
-tech.main(True)
+successful = False
+
+while not successful:
+    try:
+        tech = Technical_Watchlist()
+        tech.main(send=True)
+        successful = True
+    except Exception as e:
+        print(f"{e.__class__}: {str(e)}")
+        pass
 
