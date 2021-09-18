@@ -1,0 +1,1703 @@
+
+        <html>
+
+          <head>
+
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+
+            <style>
+              body {
+                margin: 0 100;
+                background: whitesmoke;
+              }
+
+              table, th, td {
+                border-collapse: collapse;
+                font-family: calibri;
+                text-align: center;
+                font-size: 13px;
+                table-layout: fixed;
+                width: 90px;
+              }
+
+              td, th {
+                border: 1px solid #dddddd;
+                padding: 5px;
+              }
+
+              th {
+                background-color: #042c58;
+                color: #ffffff;
+              }
+
+              td:nth-child(4) {border-right: 1.2px solid black}
+              td:nth-child(7) {border-right: 1px solid black}
+              td:nth-last-child(4) {border-left: 1.2px solid black}
+
+              tr:nth-child(even) {background-color: #eee}
+              tr:nth-child(odd) {background-color: #fff}
+
+              tr:hover {background-color: #4f6bed50}
+              button:focus {background-color: #ff5f2b50}
+
+              .very_bullish {background-color: lime; color: dimgray; font-weight: bold}
+              .bullish {background-color: darkgreen; color: white}
+              .bearish {background-color: darkred; color: white}
+              .very_bearish {background-color: red; color: white; font-weight: bold}
+
+              .uptrend {background-color: green; font-weight: 400; color: white; opacity: 0.9}
+              .downtrend {background-color: firebrick; font-weight: 400; color: white; opacity: 0.9}
+              .ambiguous {background-color: darkorange; font-weight: bold; opacity: 0.9}
+              .old {opacity: 0.3}
+            </style>
+
+            <script>
+              function toggleElements(showElement, hideElements) {
+                document.querySelectorAll(hideElements).forEach(el => el.style.display = "none");
+                document.querySelector(showElement).style.display = "block";
+              }
+            </script>
+
+            <script>
+              function color_code() {
+                last_price = document.querySelectorAll("td:nth-child(2)");
+                sma_200 = document.querySelectorAll("td:nth-child(3)");
+                momentum = document.querySelectorAll("td:nth-child(4)");
+                weekly_k = document.querySelectorAll("td:nth-child(5)");
+                weekly_d = document.querySelectorAll("td:nth-child(6)");
+                weekly_trend = document.querySelectorAll("td:nth-child(7)");
+                ema_2040 = document.querySelectorAll("td:nth-child(8)");
+                sma_50150 = document.querySelectorAll("td:nth-child(9)");
+                medium_trend = document.querySelectorAll("td:nth-child(10)");
+                daily_k = document.querySelectorAll("td:nth-child(11)");
+                daily_d = document.querySelectorAll("td:nth-child(12)");
+                daily_trend = document.querySelectorAll("td:nth-child(13)");
+                daily_time = document.querySelectorAll("td:nth-last-child(1)");
+
+                current_time = Date.parse(Date());
+                one_day = 24*60*60*1000;
+                oversold = 25; overbought = 85;
+
+                for(i = 0 ; i < last_price.length ; i++) {
+
+                  if(parseFloat(last_price[i].textContent) > parseFloat(sma_200[i].textContent)) {
+                    sma_200[i].style.color = "forestgreen"
+                    }
+
+                  if(parseFloat(last_price[i].textContent) < parseFloat(sma_200[i].textContent)) {
+                    sma_200[i].style.color = "crimson"
+                    }
+
+                  if(parseFloat(momentum[i].textContent) > 0) {
+                    momentum[i].style.color = "forestgreen";
+                    momentum[i].style.fontWeight = "bold";
+                  }
+                  if(parseFloat(momentum[i].textContent) < 0) {
+                    momentum[i].style.color = "crimson";
+                    momentum[i].style.fontWeight = "bold";
+                  }
+
+                  day_k = parseFloat(daily_k[i].textContent);
+                  day_d = parseFloat(daily_d[i].textContent);
+                  week_k = parseFloat(weekly_k[i].textContent);
+                  week_d = parseFloat(weekly_d[i].textContent);
+                  day_diff = Math.abs(day_k - day_d);
+                  week_diff = Math.abs(week_k - week_d);
+
+                  if(day_k <= oversold && day_d <= oversold) {
+                    daily_k[i].bgColor = "#f7ff00"; daily_d[i].bgColor = "#f7ff00"
+                  }
+
+                  if(day_k >= overbought && day_d >= overbought) {
+                    daily_k[i].bgColor = "lemonchiffon"; daily_d[i].bgColor = "lemonchiffon"
+                  }
+
+                  if(week_k <= oversold && week_d <= oversold) {
+                    weekly_k[i].bgColor = "#f7ff00"; weekly_d[i].bgColor = "#f7ff00"
+                  }
+
+                  if(week_k >= overbought && week_d >= overbought) {
+                    weekly_k[i].bgColor = "lemonchiffon"; weekly_d[i].bgColor = "lemonchiffon"
+                  }
+
+                  day_trd = daily_trend[i].textContent
+                  med_trd = medium_trend[i].textContent
+                  week_trd = weekly_trend[i].textContent
+
+                  if(day_trd == "Very Bullish") daily_trend[i].classList.add("very_bullish");
+                  if(day_trd == "Bullish") daily_trend[i].classList.add("bullish");
+                  if(day_trd == "Bearish") daily_trend[i].classList.add("bearish");
+                  if(day_trd == "Very Bearish") daily_trend[i].classList.add("very_bearish");
+
+                  if(week_trd == "Uptrend") weekly_trend[i].classList.add("uptrend");
+                  if(week_trd == "Downtrend") weekly_trend[i].classList.add("downtrend");
+
+                  if(med_trd == "Uptrend") medium_trend[i].classList.add("uptrend");
+                  if(med_trd == "Downtrend") medium_trend[i].classList.add("downtrend");
+                  if(med_trd == "Ambiguous") medium_trend[i].classList.add("ambiguous");
+
+                  if(Math.abs(current_time - Date.parse(daily_time[i].textContent)) / one_day > 8.1) {
+                    daily_trend[i].classList.add("old")
+                  }
+                }
+              }
+            </script>
+
+          </head>
+
+          <body>
+            <h1> <u> Technical Watchlist </u> </h1>
+            Generated on: 17 September 2021 17:28 Singapore
+            <br>
+            <br>
+            <button onclick="toggleElements('#indices', '.technical')"> Global Indices </button>
+            <button onclick="toggleElements('#equities', '.technical')"> Global Equities </button>
+            <button onclick="toggleElements('#reits', '.technical')"> Global REITs </button>
+            <button onclick="toggleElements('#bonds', '.technical')"> Global Bonds </button>
+            <button onclick="toggleElements('#commods', '.technical')"> Commodities </button>
+            <button onclick="toggleElements('#cryptos', '.technical')"> Cryptocurrencies </button>
+            <br>
+
+            <div class="technical" id="indices">
+            <h2> Global Indices </h2>
+            <table id="indices_table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Last Price</th>
+      <th>SMA(200)</th>
+      <th>6M Change</th>
+      <th>Weekly %K(9,3)</th>
+      <th>Weekly %D(3)</th>
+      <th>Weekly Trend</th>
+      <th>EMA(20) / (40)</th>
+      <th>SMA(50) / (150)</th>
+      <th>Medium Trend</th>
+      <th>Daily %K(9,3)</th>
+      <th>Daily %D(3)</th>
+      <th>Daily Trend</th>
+      <th>Daily Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>^VIX</th>
+      <td>18.69</td>
+      <td>19.98</td>
+      <td>-0.90%</td>
+      <td>34.01</td>
+      <td>29.10</td>
+      <td>Uptrend</td>
+      <td>1.39%</td>
+      <td>-5.27%</td>
+      <td>Ambiguous</td>
+      <td>57.31</td>
+      <td>58.62</td>
+      <td>Bearish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>ASHR</th>
+      <td>37.66</td>
+      <td>40.01</td>
+      <td>-2.84%</td>
+      <td>50.43</td>
+      <td>47.05</td>
+      <td>Uptrend</td>
+      <td>-0.33%</td>
+      <td>-2.46%</td>
+      <td>Downtrend</td>
+      <td>31.66</td>
+      <td>53.61</td>
+      <td>Bearish</td>
+      <td>2021-09-14</td>
+    </tr>
+    <tr>
+      <th>GXC</th>
+      <td>111.80</td>
+      <td>130.23</td>
+      <td>-14.08%</td>
+      <td>30.31</td>
+      <td>29.82</td>
+      <td>Uptrend</td>
+      <td>-1.33%</td>
+      <td>-8.26%</td>
+      <td>Downtrend</td>
+      <td>24.54</td>
+      <td>42.96</td>
+      <td>Bearish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>KWEB</th>
+      <td>48.47</td>
+      <td>72.15</td>
+      <td>-35.88%</td>
+      <td>28.23</td>
+      <td>22.92</td>
+      <td>Uptrend</td>
+      <td>-3.42%</td>
+      <td>-23.59%</td>
+      <td>Downtrend</td>
+      <td>24.29</td>
+      <td>40.36</td>
+      <td>Bearish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>EEM</th>
+      <td>51.59</td>
+      <td>53.50</td>
+      <td>-3.15%</td>
+      <td>53.08</td>
+      <td>45.64</td>
+      <td>Uptrend</td>
+      <td>-0.22%</td>
+      <td>-2.76%</td>
+      <td>Downtrend</td>
+      <td>26.24</td>
+      <td>41.81</td>
+      <td>Very Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>QQQ</th>
+      <td>378.31</td>
+      <td>336.79</td>
+      <td>19.72%</td>
+      <td>88.66</td>
+      <td>91.40</td>
+      <td>Downtrend</td>
+      <td>1.32%</td>
+      <td>7.41%</td>
+      <td>Uptrend</td>
+      <td>43.78</td>
+      <td>47.89</td>
+      <td>Very Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>ARKK</th>
+      <td>118.57</td>
+      <td>124.38</td>
+      <td>4.04%</td>
+      <td>48.37</td>
+      <td>50.14</td>
+      <td>Downtrend</td>
+      <td>-0.11%</td>
+      <td>-0.14%</td>
+      <td>Downtrend</td>
+      <td>24.37</td>
+      <td>31.72</td>
+      <td>Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>RSP</th>
+      <td>154.41</td>
+      <td>143.31</td>
+      <td>8.61%</td>
+      <td>81.16</td>
+      <td>84.89</td>
+      <td>Downtrend</td>
+      <td>0.47%</td>
+      <td>3.57%</td>
+      <td>Uptrend</td>
+      <td>27.80</td>
+      <td>29.66</td>
+      <td>Very Bearish</td>
+      <td>2021-09-07</td>
+    </tr>
+    <tr>
+      <th>SPY</th>
+      <td>447.17</td>
+      <td>408.97</td>
+      <td>12.93%</td>
+      <td>84.91</td>
+      <td>89.73</td>
+      <td>Downtrend</td>
+      <td>0.77%</td>
+      <td>5.33%</td>
+      <td>Uptrend</td>
+      <td>33.84</td>
+      <td>38.12</td>
+      <td>Very Bearish</td>
+      <td>2021-09-07</td>
+    </tr>
+    <tr>
+      <th>DIA</th>
+      <td>348.18</td>
+      <td>331.58</td>
+      <td>5.31%</td>
+      <td>68.22</td>
+      <td>77.49</td>
+      <td>Downtrend</td>
+      <td>0.08%</td>
+      <td>3.08%</td>
+      <td>Uptrend</td>
+      <td>24.94</td>
+      <td>26.76</td>
+      <td>Bearish</td>
+      <td>2021-09-07</td>
+    </tr>
+  </tbody>
+</table>
+            <br>
+            </div>
+
+            <div class="technical" id="equities" style="display: none;">
+            <h2> Global Equities </h2>
+            <table id="equities_table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Last Price</th>
+      <th>SMA(200)</th>
+      <th>6M Change</th>
+      <th>Weekly %K(9,3)</th>
+      <th>Weekly %D(3)</th>
+      <th>Weekly Trend</th>
+      <th>EMA(20) / (40)</th>
+      <th>SMA(50) / (150)</th>
+      <th>Medium Trend</th>
+      <th>Daily %K(9,3)</th>
+      <th>Daily %D(3)</th>
+      <th>Daily Trend</th>
+      <th>Daily Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>BA</th>
+      <td>213.36</td>
+      <td>229.13</td>
+      <td>-12.87%</td>
+      <td>28.32</td>
+      <td>34.18</td>
+      <td>Downtrend</td>
+      <td>-1.95%</td>
+      <td>-4.70%</td>
+      <td>Downtrend</td>
+      <td>25.87</td>
+      <td>24.93</td>
+      <td>Very Bullish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>BAC</th>
+      <td>40.45</td>
+      <td>37.47</td>
+      <td>4.58%</td>
+      <td>65.40</td>
+      <td>63.73</td>
+      <td>Uptrend</td>
+      <td>0.35%</td>
+      <td>0.78%</td>
+      <td>Uptrend</td>
+      <td>24.97</td>
+      <td>23.03</td>
+      <td>Very Bullish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>CRM</th>
+      <td>260.36</td>
+      <td>233.06</td>
+      <td>24.52%</td>
+      <td>69.88</td>
+      <td>75.39</td>
+      <td>Downtrend</td>
+      <td>1.51%</td>
+      <td>6.70%</td>
+      <td>Uptrend</td>
+      <td>28.52</td>
+      <td>23.62</td>
+      <td>Very Bullish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>VEEV</th>
+      <td>305.00</td>
+      <td>289.67</td>
+      <td>19.89%</td>
+      <td>30.20</td>
+      <td>48.80</td>
+      <td>Downtrend</td>
+      <td>-0.92%</td>
+      <td>9.94%</td>
+      <td>Ambiguous</td>
+      <td>19.08</td>
+      <td>16.51</td>
+      <td>Very Bullish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>ADBE</th>
+      <td>665.11</td>
+      <td>529.61</td>
+      <td>41.79%</td>
+      <td>89.29</td>
+      <td>91.92</td>
+      <td>Downtrend</td>
+      <td>2.30%</td>
+      <td>16.46%</td>
+      <td>Uptrend</td>
+      <td>50.59</td>
+      <td>45.00</td>
+      <td>Bullish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>JPM</th>
+      <td>158.09</td>
+      <td>148.92</td>
+      <td>1.93%</td>
+      <td>68.52</td>
+      <td>64.68</td>
+      <td>Uptrend</td>
+      <td>0.52%</td>
+      <td>0.44%</td>
+      <td>Uptrend</td>
+      <td>31.92</td>
+      <td>31.47</td>
+      <td>Bullish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>TSLA</th>
+      <td>756.99</td>
+      <td>692.92</td>
+      <td>22.35%</td>
+      <td>85.80</td>
+      <td>80.24</td>
+      <td>Uptrend</td>
+      <td>2.73%</td>
+      <td>3.46%</td>
+      <td>Uptrend</td>
+      <td>77.41</td>
+      <td>74.56</td>
+      <td>Bullish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>ASML</th>
+      <td>887.31</td>
+      <td>638.63</td>
+      <td>41.82%</td>
+      <td>93.91</td>
+      <td>91.66</td>
+      <td>Uptrend</td>
+      <td>4.33%</td>
+      <td>15.21%</td>
+      <td>Uptrend</td>
+      <td>83.54</td>
+      <td>83.66</td>
+      <td>Bearish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>GOOGL</th>
+      <td>2872.20</td>
+      <td>2264.44</td>
+      <td>41.86%</td>
+      <td>87.55</td>
+      <td>89.51</td>
+      <td>Downtrend</td>
+      <td>2.50%</td>
+      <td>13.23%</td>
+      <td>Uptrend</td>
+      <td>56.39</td>
+      <td>49.31</td>
+      <td>Bullish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>MSFT</th>
+      <td>305.22</td>
+      <td>253.26</td>
+      <td>29.07%</td>
+      <td>87.69</td>
+      <td>88.43</td>
+      <td>Downtrend</td>
+      <td>1.84%</td>
+      <td>10.88%</td>
+      <td>Uptrend</td>
+      <td>69.15</td>
+      <td>50.55</td>
+      <td>Bullish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>PEP</th>
+      <td>155.56</td>
+      <td>145.64</td>
+      <td>9.01%</td>
+      <td>59.26</td>
+      <td>71.83</td>
+      <td>Downtrend</td>
+      <td>0.47%</td>
+      <td>6.13%</td>
+      <td>Uptrend</td>
+      <td>49.27</td>
+      <td>47.68</td>
+      <td>Bullish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>UNH</th>
+      <td>416.84</td>
+      <td>381.20</td>
+      <td>10.72%</td>
+      <td>49.49</td>
+      <td>59.74</td>
+      <td>Downtrend</td>
+      <td>0.25%</td>
+      <td>5.70%</td>
+      <td>Uptrend</td>
+      <td>55.65</td>
+      <td>48.18</td>
+      <td>Bullish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>CLX</th>
+      <td>166.61</td>
+      <td>185.29</td>
+      <td>-12.43%</td>
+      <td>27.92</td>
+      <td>31.38</td>
+      <td>Downtrend</td>
+      <td>-0.95%</td>
+      <td>-4.05%</td>
+      <td>Downtrend</td>
+      <td>45.32</td>
+      <td>59.44</td>
+      <td>Bearish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>PG</th>
+      <td>144.11</td>
+      <td>135.77</td>
+      <td>6.39%</td>
+      <td>77.30</td>
+      <td>79.11</td>
+      <td>Downtrend</td>
+      <td>0.90%</td>
+      <td>4.37%</td>
+      <td>Uptrend</td>
+      <td>51.19</td>
+      <td>60.51</td>
+      <td>Bearish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>INTU</th>
+      <td>572.88</td>
+      <td>439.37</td>
+      <td>52.13%</td>
+      <td>86.23</td>
+      <td>88.31</td>
+      <td>Downtrend</td>
+      <td>2.75%</td>
+      <td>16.75%</td>
+      <td>Uptrend</td>
+      <td>79.68</td>
+      <td>69.85</td>
+      <td>Bullish</td>
+      <td>2021-09-14</td>
+    </tr>
+    <tr>
+      <th>NKE</th>
+      <td>157.60</td>
+      <td>144.71</td>
+      <td>18.51%</td>
+      <td>42.77</td>
+      <td>63.69</td>
+      <td>Downtrend</td>
+      <td>0.16%</td>
+      <td>13.23%</td>
+      <td>Uptrend</td>
+      <td>20.65</td>
+      <td>22.02</td>
+      <td>Bearish</td>
+      <td>2021-09-14</td>
+    </tr>
+    <tr>
+      <th>COST</th>
+      <td>463.31</td>
+      <td>384.20</td>
+      <td>31.61%</td>
+      <td>92.41</td>
+      <td>93.49</td>
+      <td>Downtrend</td>
+      <td>2.45%</td>
+      <td>12.73%</td>
+      <td>Uptrend</td>
+      <td>51.03</td>
+      <td>59.87</td>
+      <td>Bearish</td>
+      <td>2021-09-13</td>
+    </tr>
+    <tr>
+      <th>ILMN</th>
+      <td>449.92</td>
+      <td>427.16</td>
+      <td>12.07%</td>
+      <td>24.70</td>
+      <td>44.77</td>
+      <td>Downtrend</td>
+      <td>-1.22%</td>
+      <td>9.16%</td>
+      <td>Ambiguous</td>
+      <td>19.71</td>
+      <td>25.14</td>
+      <td>Bearish</td>
+      <td>2021-09-13</td>
+    </tr>
+    <tr>
+      <th>V</th>
+      <td>224.33</td>
+      <td>223.16</td>
+      <td>5.06%</td>
+      <td>16.48</td>
+      <td>29.22</td>
+      <td>Downtrend</td>
+      <td>-1.35%</td>
+      <td>3.44%</td>
+      <td>Ambiguous</td>
+      <td>28.59</td>
+      <td>29.16</td>
+      <td>Bearish</td>
+      <td>2021-09-13</td>
+    </tr>
+    <tr>
+      <th>ZM</th>
+      <td>278.22</td>
+      <td>354.54</td>
+      <td>-13.04%</td>
+      <td>13.48</td>
+      <td>25.57</td>
+      <td>Downtrend</td>
+      <td>-5.75%</td>
+      <td>0.47%</td>
+      <td>Ambiguous</td>
+      <td>10.92</td>
+      <td>11.65</td>
+      <td>Bearish</td>
+      <td>2021-09-13</td>
+    </tr>
+    <tr>
+      <th>DPZ</th>
+      <td>511.21</td>
+      <td>426.40</td>
+      <td>37.48%</td>
+      <td>59.39</td>
+      <td>66.16</td>
+      <td>Downtrend</td>
+      <td>0.89%</td>
+      <td>16.18%</td>
+      <td>Uptrend</td>
+      <td>31.40</td>
+      <td>36.96</td>
+      <td>Bearish</td>
+      <td>2021-09-10</td>
+    </tr>
+    <tr>
+      <th>AMZN</th>
+      <td>3488.24</td>
+      <td>3301.23</td>
+      <td>14.29%</td>
+      <td>45.53</td>
+      <td>40.04</td>
+      <td>Uptrend</td>
+      <td>0.36%</td>
+      <td>3.84%</td>
+      <td>Uptrend</td>
+      <td>50.99</td>
+      <td>56.63</td>
+      <td>Very Bearish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>AAPL</th>
+      <td>148.79</td>
+      <td>133.86</td>
+      <td>22.75%</td>
+      <td>65.24</td>
+      <td>76.81</td>
+      <td>Downtrend</td>
+      <td>1.39%</td>
+      <td>10.00%</td>
+      <td>Uptrend</td>
+      <td>26.20</td>
+      <td>37.33</td>
+      <td>Bearish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>BABA</th>
+      <td>156.26</td>
+      <td>223.60</td>
+      <td>-31.24%</td>
+      <td>15.87</td>
+      <td>19.81</td>
+      <td>Downtrend</td>
+      <td>-5.36%</td>
+      <td>-13.20%</td>
+      <td>Downtrend</td>
+      <td>20.67</td>
+      <td>33.20</td>
+      <td>Bearish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>0700.HK</th>
+      <td>461.80</td>
+      <td>589.83</td>
+      <td>-23.80%</td>
+      <td>35.44</td>
+      <td>31.20</td>
+      <td>Uptrend</td>
+      <td>-2.08%</td>
+      <td>-16.32%</td>
+      <td>Downtrend</td>
+      <td>18.76</td>
+      <td>30.08</td>
+      <td>Bearish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>UNP</th>
+      <td>203.44</td>
+      <td>215.63</td>
+      <td>-8.74%</td>
+      <td>20.75</td>
+      <td>36.38</td>
+      <td>Downtrend</td>
+      <td>-1.56%</td>
+      <td>-0.24%</td>
+      <td>Downtrend</td>
+      <td>7.70</td>
+      <td>9.28</td>
+      <td>Bearish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>MA</th>
+      <td>346.31</td>
+      <td>359.70</td>
+      <td>-5.42%</td>
+      <td>15.36</td>
+      <td>23.51</td>
+      <td>Downtrend</td>
+      <td>-1.81%</td>
+      <td>-0.41%</td>
+      <td>Downtrend</td>
+      <td>43.64</td>
+      <td>42.08</td>
+      <td>Very Bullish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>TSM</th>
+      <td>120.79</td>
+      <td>118.02</td>
+      <td>3.63%</td>
+      <td>68.17</td>
+      <td>57.15</td>
+      <td>Uptrend</td>
+      <td>1.18%</td>
+      <td>-0.59%</td>
+      <td>Ambiguous</td>
+      <td>43.87</td>
+      <td>59.79</td>
+      <td>Very Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>MCD</th>
+      <td>243.21</td>
+      <td>226.05</td>
+      <td>7.99%</td>
+      <td>67.26</td>
+      <td>63.12</td>
+      <td>Uptrend</td>
+      <td>0.43%</td>
+      <td>3.18%</td>
+      <td>Uptrend</td>
+      <td>82.89</td>
+      <td>74.59</td>
+      <td>Bullish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>FB</th>
+      <td>373.06</td>
+      <td>311.38</td>
+      <td>31.81%</td>
+      <td>80.55</td>
+      <td>79.15</td>
+      <td>Uptrend</td>
+      <td>1.79%</td>
+      <td>11.65%</td>
+      <td>Uptrend</td>
+      <td>40.80</td>
+      <td>50.58</td>
+      <td>Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>JNJ</th>
+      <td>165.22</td>
+      <td>164.62</td>
+      <td>0.18%</td>
+      <td>38.10</td>
+      <td>59.63</td>
+      <td>Downtrend</td>
+      <td>-0.49%</td>
+      <td>3.19%</td>
+      <td>Ambiguous</td>
+      <td>9.02</td>
+      <td>11.42</td>
+      <td>Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>MELI</th>
+      <td>1881.35</td>
+      <td>1624.21</td>
+      <td>31.38%</td>
+      <td>83.48</td>
+      <td>83.65</td>
+      <td>Downtrend</td>
+      <td>3.77%</td>
+      <td>9.43%</td>
+      <td>Uptrend</td>
+      <td>41.13</td>
+      <td>43.17</td>
+      <td>Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>YUMC</th>
+      <td>55.68</td>
+      <td>61.47</td>
+      <td>-6.29%</td>
+      <td>23.77</td>
+      <td>29.16</td>
+      <td>Downtrend</td>
+      <td>-1.44%</td>
+      <td>-0.88%</td>
+      <td>Downtrend</td>
+      <td>23.18</td>
+      <td>38.71</td>
+      <td>Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>ACN</th>
+      <td>342.23</td>
+      <td>284.46</td>
+      <td>21.89%</td>
+      <td>93.99</td>
+      <td>94.33</td>
+      <td>Downtrend</td>
+      <td>2.38%</td>
+      <td>10.59%</td>
+      <td>Uptrend</td>
+      <td>68.16</td>
+      <td>69.21</td>
+      <td>Very Bearish</td>
+      <td>2021-09-07</td>
+    </tr>
+    <tr>
+      <th>ICE</th>
+      <td>118.93</td>
+      <td>115.17</td>
+      <td>4.66%</td>
+      <td>62.32</td>
+      <td>64.86</td>
+      <td>Downtrend</td>
+      <td>0.28%</td>
+      <td>2.57%</td>
+      <td>Uptrend</td>
+      <td>37.90</td>
+      <td>43.11</td>
+      <td>Bearish</td>
+      <td>2021-09-07</td>
+    </tr>
+    <tr>
+      <th>MMM</th>
+      <td>182.66</td>
+      <td>189.60</td>
+      <td>-6.27%</td>
+      <td>15.04</td>
+      <td>27.56</td>
+      <td>Downtrend</td>
+      <td>-1.75%</td>
+      <td>0.60%</td>
+      <td>Ambiguous</td>
+      <td>10.82</td>
+      <td>13.20</td>
+      <td>Bearish</td>
+      <td>2021-09-07</td>
+    </tr>
+    <tr>
+      <th>NVDA</th>
+      <td>222.42</td>
+      <td>161.76</td>
+      <td>73.23%</td>
+      <td>88.92</td>
+      <td>88.80</td>
+      <td>Uptrend</td>
+      <td>3.70%</td>
+      <td>20.77%</td>
+      <td>Uptrend</td>
+      <td>38.28</td>
+      <td>43.92</td>
+      <td>Very Bearish</td>
+      <td>2021-09-02</td>
+    </tr>
+    <tr>
+      <th>CME</th>
+      <td>188.69</td>
+      <td>201.71</td>
+      <td>-9.48%</td>
+      <td>8.83</td>
+      <td>17.01</td>
+      <td>Downtrend</td>
+      <td>-2.37%</td>
+      <td>-1.50%</td>
+      <td>Downtrend</td>
+      <td>12.79</td>
+      <td>12.80</td>
+      <td>Bearish</td>
+      <td>2021-09-02</td>
+    </tr>
+    <tr>
+      <th>EL</th>
+      <td>323.13</td>
+      <td>295.78</td>
+      <td>10.54%</td>
+      <td>62.22</td>
+      <td>76.42</td>
+      <td>Downtrend</td>
+      <td>0.86%</td>
+      <td>6.68%</td>
+      <td>Uptrend</td>
+      <td>16.60</td>
+      <td>25.14</td>
+      <td>Bearish</td>
+      <td>2021-09-02</td>
+    </tr>
+    <tr>
+      <th>LMT</th>
+      <td>341.50</td>
+      <td>363.56</td>
+      <td>-6.36%</td>
+      <td>7.34</td>
+      <td>13.65</td>
+      <td>Downtrend</td>
+      <td>-1.77%</td>
+      <td>-1.48%</td>
+      <td>Downtrend</td>
+      <td>10.56</td>
+      <td>13.89</td>
+      <td>Bearish</td>
+      <td>2021-09-01</td>
+    </tr>
+  </tbody>
+</table>
+            <br>
+            </div>
+
+            <div class="technical" id="reits" style="display: none;">
+            <h2> Global REITs </h2>
+            <table id="reits_table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Last Price</th>
+      <th>SMA(200)</th>
+      <th>6M Change</th>
+      <th>Weekly %K(9,3)</th>
+      <th>Weekly %D(3)</th>
+      <th>Weekly Trend</th>
+      <th>EMA(20) / (40)</th>
+      <th>SMA(50) / (150)</th>
+      <th>Medium Trend</th>
+      <th>Daily %K(9,3)</th>
+      <th>Daily %D(3)</th>
+      <th>Daily Trend</th>
+      <th>Daily Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>BUOU.SI</th>
+      <td>1.49</td>
+      <td>1.45</td>
+      <td>4.20%</td>
+      <td>64.38</td>
+      <td>74.80</td>
+      <td>Downtrend</td>
+      <td>-0.04%</td>
+      <td>3.62%</td>
+      <td>Ambiguous</td>
+      <td>46.01</td>
+      <td>43.29</td>
+      <td>Bullish</td>
+      <td>2021-09-17</td>
+    </tr>
+    <tr>
+      <th>M44U.SI</th>
+      <td>2.11</td>
+      <td>1.99</td>
+      <td>9.33%</td>
+      <td>54.90</td>
+      <td>57.13</td>
+      <td>Downtrend</td>
+      <td>0.01%</td>
+      <td>4.43%</td>
+      <td>Uptrend</td>
+      <td>57.72</td>
+      <td>48.71</td>
+      <td>Bullish</td>
+      <td>2021-09-17</td>
+    </tr>
+    <tr>
+      <th>ME8U.SI</th>
+      <td>2.92</td>
+      <td>2.81</td>
+      <td>6.93%</td>
+      <td>52.28</td>
+      <td>59.97</td>
+      <td>Downtrend</td>
+      <td>-0.10%</td>
+      <td>3.75%</td>
+      <td>Ambiguous</td>
+      <td>49.13</td>
+      <td>36.77</td>
+      <td>Bullish</td>
+      <td>2021-09-17</td>
+    </tr>
+    <tr>
+      <th>A17U.SI</th>
+      <td>3.12</td>
+      <td>3.02</td>
+      <td>2.97%</td>
+      <td>60.57</td>
+      <td>64.34</td>
+      <td>Downtrend</td>
+      <td>0.21%</td>
+      <td>1.86%</td>
+      <td>Uptrend</td>
+      <td>62.00</td>
+      <td>47.57</td>
+      <td>Bullish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>AJBU.SI</th>
+      <td>2.54</td>
+      <td>2.67</td>
+      <td>-6.27%</td>
+      <td>35.17</td>
+      <td>41.94</td>
+      <td>Downtrend</td>
+      <td>-0.40%</td>
+      <td>-2.18%</td>
+      <td>Downtrend</td>
+      <td>39.34</td>
+      <td>42.39</td>
+      <td>Bearish</td>
+      <td>2021-09-14</td>
+    </tr>
+    <tr>
+      <th>K71U.SI</th>
+      <td>1.05</td>
+      <td>1.16</td>
+      <td>-14.63%</td>
+      <td>16.37</td>
+      <td>24.75</td>
+      <td>Downtrend</td>
+      <td>-2.15%</td>
+      <td>-3.42%</td>
+      <td>Downtrend</td>
+      <td>30.44</td>
+      <td>38.23</td>
+      <td>Bearish</td>
+      <td>2021-09-14</td>
+    </tr>
+    <tr>
+      <th>BWCU.SI</th>
+      <td>0.80</td>
+      <td>0.76</td>
+      <td>11.19%</td>
+      <td>40.18</td>
+      <td>52.04</td>
+      <td>Downtrend</td>
+      <td>-0.11%</td>
+      <td>4.84%</td>
+      <td>Ambiguous</td>
+      <td>18.59</td>
+      <td>32.88</td>
+      <td>Bearish</td>
+      <td>2021-09-13</td>
+    </tr>
+    <tr>
+      <th>N2IU.SI</th>
+      <td>2.12</td>
+      <td>2.10</td>
+      <td>0.47%</td>
+      <td>40.77</td>
+      <td>37.98</td>
+      <td>Uptrend</td>
+      <td>-0.54%</td>
+      <td>0.44%</td>
+      <td>Ambiguous</td>
+      <td>78.87</td>
+      <td>67.84</td>
+      <td>Bullish</td>
+      <td>2021-09-10</td>
+    </tr>
+    <tr>
+      <th>AU8U.SI</th>
+      <td>1.27</td>
+      <td>1.36</td>
+      <td>-8.63%</td>
+      <td>12.76</td>
+      <td>22.08</td>
+      <td>Downtrend</td>
+      <td>-1.21%</td>
+      <td>-1.96%</td>
+      <td>Downtrend</td>
+      <td>14.56</td>
+      <td>25.58</td>
+      <td>Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>J69U.SI</th>
+      <td>2.28</td>
+      <td>2.44</td>
+      <td>-7.69%</td>
+      <td>21.96</td>
+      <td>29.17</td>
+      <td>Downtrend</td>
+      <td>-1.08%</td>
+      <td>-2.11%</td>
+      <td>Downtrend</td>
+      <td>21.74</td>
+      <td>26.82</td>
+      <td>Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>C2PU.SI</th>
+      <td>4.72</td>
+      <td>4.31</td>
+      <td>13.73%</td>
+      <td>58.81</td>
+      <td>70.31</td>
+      <td>Downtrend</td>
+      <td>0.65%</td>
+      <td>7.99%</td>
+      <td>Uptrend</td>
+      <td>20.23</td>
+      <td>28.41</td>
+      <td>Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+    <tr>
+      <th>C38U.SI</th>
+      <td>2.00</td>
+      <td>2.13</td>
+      <td>-6.54%</td>
+      <td>22.09</td>
+      <td>34.26</td>
+      <td>Downtrend</td>
+      <td>-1.14%</td>
+      <td>-0.77%</td>
+      <td>Downtrend</td>
+      <td>17.62</td>
+      <td>24.77</td>
+      <td>Bearish</td>
+      <td>2021-09-08</td>
+    </tr>
+  </tbody>
+</table>
+            <br>
+            </div>
+
+            <div class="technical" id="bonds" style="display: none;">
+            <h2> Global Bonds </h2>
+            <table id="bonds_table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Last Price</th>
+      <th>SMA(200)</th>
+      <th>6M Change</th>
+      <th>Weekly %K(9,3)</th>
+      <th>Weekly %D(3)</th>
+      <th>Weekly Trend</th>
+      <th>EMA(20) / (40)</th>
+      <th>SMA(50) / (150)</th>
+      <th>Medium Trend</th>
+      <th>Daily %K(9,3)</th>
+      <th>Daily %D(3)</th>
+      <th>Daily Trend</th>
+      <th>Daily Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>SHY</th>
+      <td>86.21</td>
+      <td>86.28</td>
+      <td>-0.10%</td>
+      <td>42.20</td>
+      <td>49.15</td>
+      <td>Downtrend</td>
+      <td>0.00%</td>
+      <td>-0.03%</td>
+      <td>Ambiguous</td>
+      <td>49.75</td>
+      <td>54.12</td>
+      <td>Bearish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>IEI</th>
+      <td>130.97</td>
+      <td>131.29</td>
+      <td>0.55%</td>
+      <td>30.31</td>
+      <td>44.65</td>
+      <td>Downtrend</td>
+      <td>0.00%</td>
+      <td>0.35%</td>
+      <td>Uptrend</td>
+      <td>43.87</td>
+      <td>52.06</td>
+      <td>Bearish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>IEF</th>
+      <td>116.83</td>
+      <td>116.38</td>
+      <td>2.86%</td>
+      <td>39.70</td>
+      <td>54.72</td>
+      <td>Downtrend</td>
+      <td>0.09%</td>
+      <td>1.48%</td>
+      <td>Uptrend</td>
+      <td>54.67</td>
+      <td>55.13</td>
+      <td>Bearish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>BNDX</th>
+      <td>57.40</td>
+      <td>57.58</td>
+      <td>0.19%</td>
+      <td>38.94</td>
+      <td>61.34</td>
+      <td>Downtrend</td>
+      <td>-0.03%</td>
+      <td>0.75%</td>
+      <td>Ambiguous</td>
+      <td>28.05</td>
+      <td>32.18</td>
+      <td>Bearish</td>
+      <td>2021-09-16</td>
+    </tr>
+    <tr>
+      <th>TLT</th>
+      <td>149.89</td>
+      <td>145.59</td>
+      <td>9.68%</td>
+      <td>58.72</td>
+      <td>63.70</td>
+      <td>Downtrend</td>
+      <td>0.49%</td>
+      <td>4.28%</td>
+      <td>Uptrend</td>
+      <td>70.98</td>
+      <td>65.83</td>
+      <td>Bullish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>BND</th>
+      <td>86.37</td>
+      <td>86.18</td>
+      <td>1.88%</td>
+      <td>45.49</td>
+      <td>54.31</td>
+      <td>Downtrend</td>
+      <td>0.06%</td>
+      <td>0.85%</td>
+      <td>Uptrend</td>
+      <td>66.57</td>
+      <td>63.41</td>
+      <td>Bullish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>LQD</th>
+      <td>135.66</td>
+      <td>133.72</td>
+      <td>4.66%</td>
+      <td>58.86</td>
+      <td>61.69</td>
+      <td>Downtrend</td>
+      <td>0.18%</td>
+      <td>1.85%</td>
+      <td>Uptrend</td>
+      <td>76.24</td>
+      <td>72.67</td>
+      <td>Bullish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>EMB</th>
+      <td>112.87</td>
+      <td>112.18</td>
+      <td>3.30%</td>
+      <td>69.61</td>
+      <td>71.35</td>
+      <td>Downtrend</td>
+      <td>0.21%</td>
+      <td>1.01%</td>
+      <td>Uptrend</td>
+      <td>40.25</td>
+      <td>48.73</td>
+      <td>Bearish</td>
+      <td>2021-09-03</td>
+    </tr>
+  </tbody>
+</table>
+            <br>
+            </div>
+
+            <div class="technical" id="commods" style="display: none;">
+            <h2> Commodities </h2>
+            <table id="commods_table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Last Price</th>
+      <th>SMA(200)</th>
+      <th>6M Change</th>
+      <th>Weekly %K(9,3)</th>
+      <th>Weekly %D(3)</th>
+      <th>Weekly Trend</th>
+      <th>EMA(20) / (40)</th>
+      <th>SMA(50) / (150)</th>
+      <th>Medium Trend</th>
+      <th>Daily %K(9,3)</th>
+      <th>Daily %D(3)</th>
+      <th>Daily Trend</th>
+      <th>Daily Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>COMT</th>
+      <td>34.88</td>
+      <td>31.31</td>
+      <td>15.38%</td>
+      <td>77.17</td>
+      <td>69.51</td>
+      <td>Uptrend</td>
+      <td>0.61%</td>
+      <td>4.31%</td>
+      <td>Uptrend</td>
+      <td>73.16</td>
+      <td>72.47</td>
+      <td>Bullish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>CCRV</th>
+      <td>26.58</td>
+      <td>23.86</td>
+      <td>15.81%</td>
+      <td>79.69</td>
+      <td>65.18</td>
+      <td>Uptrend</td>
+      <td>0.96%</td>
+      <td>2.92%</td>
+      <td>Uptrend</td>
+      <td>83.91</td>
+      <td>73.28</td>
+      <td>Bullish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>XOP</th>
+      <td>88.76</td>
+      <td>79.93</td>
+      <td>6.53%</td>
+      <td>58.05</td>
+      <td>42.41</td>
+      <td>Uptrend</td>
+      <td>0.29%</td>
+      <td>-2.57%</td>
+      <td>Ambiguous</td>
+      <td>78.74</td>
+      <td>74.74</td>
+      <td>Bullish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>PDBC</th>
+      <td>20.58</td>
+      <td>18.14</td>
+      <td>18.14%</td>
+      <td>77.52</td>
+      <td>69.83</td>
+      <td>Uptrend</td>
+      <td>0.74%</td>
+      <td>4.80%</td>
+      <td>Uptrend</td>
+      <td>78.59</td>
+      <td>75.68</td>
+      <td>Bullish</td>
+      <td>2021-09-13</td>
+    </tr>
+    <tr>
+      <th>DBC</th>
+      <td>19.68</td>
+      <td>17.43</td>
+      <td>17.35%</td>
+      <td>77.30</td>
+      <td>69.85</td>
+      <td>Uptrend</td>
+      <td>0.73%</td>
+      <td>4.55%</td>
+      <td>Uptrend</td>
+      <td>78.11</td>
+      <td>76.21</td>
+      <td>Bullish</td>
+      <td>2021-09-13</td>
+    </tr>
+    <tr>
+      <th>XLE</th>
+      <td>49.69</td>
+      <td>48.08</td>
+      <td>-1.47%</td>
+      <td>49.20</td>
+      <td>37.77</td>
+      <td>Uptrend</td>
+      <td>-0.80%</td>
+      <td>-2.99%</td>
+      <td>Downtrend</td>
+      <td>71.22</td>
+      <td>59.27</td>
+      <td>Bullish</td>
+      <td>2021-09-13</td>
+    </tr>
+    <tr>
+      <th>BDRY</th>
+      <td>30.65</td>
+      <td>19.79</td>
+      <td>66.40%</td>
+      <td>83.25</td>
+      <td>75.65</td>
+      <td>Uptrend</td>
+      <td>2.75%</td>
+      <td>17.65%</td>
+      <td>Uptrend</td>
+      <td>80.45</td>
+      <td>68.51</td>
+      <td>Bullish</td>
+      <td>2021-09-09</td>
+    </tr>
+    <tr>
+      <th>GLD</th>
+      <td>164.03</td>
+      <td>169.35</td>
+      <td>1.10%</td>
+      <td>54.01</td>
+      <td>55.11</td>
+      <td>Downtrend</td>
+      <td>-0.15%</td>
+      <td>0.21%</td>
+      <td>Ambiguous</td>
+      <td>22.83</td>
+      <td>31.01</td>
+      <td>Bearish</td>
+      <td>2021-09-07</td>
+    </tr>
+    <tr>
+      <th>SLV</th>
+      <td>21.25</td>
+      <td>23.95</td>
+      <td>-8.52%</td>
+      <td>21.14</td>
+      <td>22.21</td>
+      <td>Downtrend</td>
+      <td>-1.62%</td>
+      <td>-5.25%</td>
+      <td>Downtrend</td>
+      <td>23.37</td>
+      <td>32.63</td>
+      <td>Bearish</td>
+      <td>2021-09-07</td>
+    </tr>
+  </tbody>
+</table>
+            <br>
+            </div>
+
+            <div class="technical" id="cryptos" style="display: none;">
+            <h2> Cryptocurrencies </h2>
+            <table id="cryptos_table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Last Price</th>
+      <th>SMA(200)</th>
+      <th>6M Change</th>
+      <th>Weekly %K(9,3)</th>
+      <th>Weekly %D(3)</th>
+      <th>Weekly Trend</th>
+      <th>EMA(20) / (40)</th>
+      <th>SMA(50) / (150)</th>
+      <th>Medium Trend</th>
+      <th>Daily %K(9,3)</th>
+      <th>Daily %D(3)</th>
+      <th>Daily Trend</th>
+      <th>Daily Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>XRP-USD</th>
+      <td>1.09</td>
+      <td>0.94</td>
+      <td>-8.25%</td>
+      <td>68.74</td>
+      <td>65.73</td>
+      <td>Uptrend</td>
+      <td>3.69%</td>
+      <td>7.99%</td>
+      <td>Uptrend</td>
+      <td>55.27</td>
+      <td>50.80</td>
+      <td>Bullish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>BCH-USD</th>
+      <td>642.11</td>
+      <td>666.92</td>
+      <td>-21.85%</td>
+      <td>69.23</td>
+      <td>67.50</td>
+      <td>Uptrend</td>
+      <td>2.09%</td>
+      <td>-7.23%</td>
+      <td>Ambiguous</td>
+      <td>42.07</td>
+      <td>34.03</td>
+      <td>Bullish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>ADA-USD</th>
+      <td>2.41</td>
+      <td>1.59</td>
+      <td>33.32%</td>
+      <td>75.44</td>
+      <td>72.39</td>
+      <td>Uptrend</td>
+      <td>6.04%</td>
+      <td>31.24%</td>
+      <td>Uptrend</td>
+      <td>36.98</td>
+      <td>43.40</td>
+      <td>Bearish</td>
+      <td>2021-09-15</td>
+    </tr>
+    <tr>
+      <th>BTC-USD</th>
+      <td>47872.82</td>
+      <td>45926.21</td>
+      <td>17.39%</td>
+      <td>80.70</td>
+      <td>79.00</td>
+      <td>Uptrend</td>
+      <td>2.33%</td>
+      <td>9.45%</td>
+      <td>Uptrend</td>
+      <td>64.90</td>
+      <td>49.29</td>
+      <td>Bullish</td>
+      <td>2021-09-14</td>
+    </tr>
+    <tr>
+      <th>ETH-USD</th>
+      <td>3521.13</td>
+      <td>2558.79</td>
+      <td>26.46%</td>
+      <td>79.64</td>
+      <td>77.25</td>
+      <td>Uptrend</td>
+      <td>4.86%</td>
+      <td>16.95%</td>
+      <td>Uptrend</td>
+      <td>61.87</td>
+      <td>51.35</td>
+      <td>Bullish</td>
+      <td>2021-09-14</td>
+    </tr>
+    <tr>
+      <th>BNB-USD</th>
+      <td>419.39</td>
+      <td>389.17</td>
+      <td>6.55%</td>
+      <td>70.35</td>
+      <td>70.98</td>
+      <td>Downtrend</td>
+      <td>1.98%</td>
+      <td>3.44%</td>
+      <td>Uptrend</td>
+      <td>52.83</td>
+      <td>43.17</td>
+      <td>Bullish</td>
+      <td>2021-09-14</td>
+    </tr>
+    <tr>
+      <th>LTC-USD</th>
+      <td>186.49</td>
+      <td>193.18</td>
+      <td>-12.15%</td>
+      <td>69.01</td>
+      <td>66.92</td>
+      <td>Uptrend</td>
+      <td>3.45%</td>
+      <td>-6.08%</td>
+      <td>Ambiguous</td>
+      <td>26.15</td>
+      <td>27.51</td>
+      <td>Bearish</td>
+      <td>2021-09-06</td>
+    </tr>
+  </tbody>
+</table>
+            <br>
+            </div>
+
+          </body>
+
+          <script>color_code()</script>
+        </html>
+        
