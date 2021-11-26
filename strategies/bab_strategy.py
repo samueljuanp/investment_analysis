@@ -7,7 +7,7 @@ Created on Sat Jul 31 09:53:26 2021
 
 # set github directory
 import os
-os.chdir(r'C:\Users\User\Documents\GitHub\investment_analysis')
+os.chdir(r'C:\Users\samu0\OneDrive\Python_Code\investment_analysis\strategies')
 
 # import libraries
 import pandas as pd
@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style('darkgrid')
 from statsmodels.regression.rolling import RollingOLS
-#import investment_analysis as ia
+
 
 #%%
 
@@ -36,6 +36,7 @@ data = pd.read_csv('spx_member_price.csv', index_col=0, parse_dates=True)
 # pull benchmark price
 spx = wb.DataReader('^GSPC', 'yahoo', '2000-01-01', data.index[-1])[['Adj Close']]
 spx.columns = ['SPX']
+
 
 #%%
 
@@ -73,20 +74,21 @@ def get_rolling_beta(stock, window=500, cov_type='HCCM'):
 
     return rolling_beta
 
+
 #%%
 
 # populate rolling 2Y beta for all stocks
-#beta = []
+beta = []
 
-#for stock in data.columns:
-    #beta.append(get_rolling_beta(stock, window=500, cov_type='HCCM'))
-#beta = pd.concat(beta, axis=1)
+for stock in data.columns:
+    beta.append(get_rolling_beta(stock, window=252, cov_type='HCCM'))
+beta = pd.concat(beta, axis=1)
 
 # save latest data to csv
-#beta.to_csv('rolling_2y_beta.csv')
+beta.to_csv('rolling_1y_beta.csv')
 
 # read beta information from csv
-beta = pd.read_csv('rolling_2y_beta.csv', index_col=0, parse_dates=True)
+#beta = pd.read_csv('rolling_2y_beta.csv', index_col=0, parse_dates=True)
 
 #%%
 
@@ -100,7 +102,7 @@ naive.loc[:] = np.nan
 
 # set quantile parameter and ratio
 q = 0.05
-low_high_ratio = 0.80
+low_high_ratio = 0.40
 
 # loop over each day
 for date in beta.index:
@@ -128,8 +130,8 @@ for date in beta.index:
         long_high_beta = high_beta / high_beta.sum()
 
         # assign final allocation
-        allocation.loc[date, long_low_beta.index] = long_low_beta.values * low_high_ratio
-        allocation.loc[date, long_high_beta.index] = long_high_beta.values * (1-low_high_ratio)
+        allocation.loc[date, low_beta.index] = long_low_beta.values * low_high_ratio
+        allocation.loc[date, high_beta.index] = long_high_beta.values * (1-low_high_ratio)
 
 # sanity check for portfolio beta
 #port_beta = (allocation * beta).dropna(how='all').sum(axis=1)
@@ -144,7 +146,7 @@ for date in beta.index:
 #%%
 
 # define backtest period
-start = None
+start = '2015'
 end = None
 
 # define function to compute returns after transaction cost
@@ -200,27 +202,5 @@ plt.plot((strat_return + 1).cumprod(),
 plt.plot((naive_return + 1).cumprod(),
          label=f"Naive-Equal-Weight | Annualized = {annualized_return(naive_return):.2f}% | Sharpe = {sharpe_ratio(naive_return):.2f} | Max.DD = {max_drawdown(naive_return):.2f}%")
 
-# handle market curve
-plt.plot((market_return + 1).cumprod(),
-         label=f"S&P500-Benchmark | Annualized = {annualized_return(market_return):.2f}% | Sharpe = {sharpe_ratio(market_return):.2f} | Max.DD = {max_drawdown(market_return):.2f}%")
-
 plt.legend(fontsize=12)
 plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

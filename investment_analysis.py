@@ -7,10 +7,10 @@ from pandas_datareader import data as wb
 from yahoofinancials import YahooFinancials as yf
 import matplotlib.pyplot as plt
 import seaborn as sns
-from currency_converter import CurrencyConverter
+#from currency_converter import CurrencyConverter
 
 sns.set_style('darkgrid')
-ratio = (18, 12)
+ratio = (13,8)
 
 
 def stock_return_risk(ticker, method='log'):
